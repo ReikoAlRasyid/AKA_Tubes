@@ -62,12 +62,14 @@
                     <div class="config-section">
                         <div class="input-group">
                             <label><i class="fas fa-database"></i> Ukuran Data Minimum</label>
-                            <input type="number" id="minData" value="100" min="10" max="10000" step="10">
+                            <!-- UBAH: min="10" menjadi min="0" -->
+                            <input type="number" id="minData" value="0" min="0" max="10000" step="10">
                         </div>
 
                         <div class="input-group">
                             <label><i class="fas fa-database"></i> Ukuran Data Maksimum</label>
-                            <input type="number" id="maxData" value="1000" min="100" max="50000" step="10">
+                            <!-- UBAH: min="100" menjadi min="10" -->
+                            <input type="number" id="maxData" value="1000" min="10" max="50000" step="10">
                         </div>
 
                         <div class="input-group">
