@@ -33,6 +33,7 @@ function luhnRecursive(cardNumber, index = 0, total = 0, isEven = false) {
 }
 
 function generateRandomCardNumber(length) {
+    if (length <= 0) return ""; // Handle kasus panjang 0
     let result = '';
     for (let i = 0; i < length; i++) {
         result += Math.floor(Math.random() * 10);
@@ -119,7 +120,9 @@ function initChart() {
                             return value.toFixed(2) + ' ms';
                         }
                     },
-                    beginAtZero: true
+                    beginAtZero: true,
+                    min: 0,
+                    suggestedMax: 10
                 }
             }
         }
@@ -150,6 +153,11 @@ function clearChart() {
     timeChart.data.labels = [];
     timeChart.data.datasets[0].data = [];
     timeChart.data.datasets[1].data = [];
+    
+    // Reset skala Y ke 0
+    timeChart.options.scales.y.min = 0;
+    timeChart.options.scales.y.suggestedMax = 10;
+    
     timeChart.update();
     currentDataPoints = [];
     updateChartInfo();
@@ -158,13 +166,21 @@ function clearChart() {
 
 function resetAll() {
     clearChart();
-    document.getElementById('minData').value = 100;
+    // Ubah nilai default minData menjadi 0
+    document.getElementById('minData').value = 0;
     document.getElementById('maxData').value = 1000;
     document.getElementById('dataSteps').value = 10;
     document.getElementById('stepValue').textContent = '10';
     setIterations(5);
     document.getElementById('chartStatus').textContent = 'Siap';
     document.getElementById('chartStatus').style.color = '';
+    
+    // Pastikan skala Y kembali ke 0
+    if (timeChart) {
+        timeChart.options.scales.y.min = 0;
+        timeChart.options.scales.y.suggestedMax = 10;
+        timeChart.update();
+    }
 }
 
 function updateResults(iterativeTime, recursiveTime) {
@@ -205,33 +221,93 @@ async function runTest() {
     runBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> MENJALANKAN...';
     statusElem.textContent = 'Menjalankan tes...';
     statusElem.style.color = '#f59e0b';
+    
     try {
         const minData = parseInt(document.getElementById('minData').value);
         const maxData = parseInt(document.getElementById('maxData').value);
         const steps = parseInt(document.getElementById('dataSteps').value);
-        const stepSize = Math.floor((maxData - minData) / steps);
+        
+        // Validasi input
+        if (minData < 0) minData = 0;
+        if (maxData < minData) maxData = minData + 10;
+        if (maxData > 50000) maxData = 50000;
+        
+        // Buat array ukuran data
         const dataSizes = [];
-        for (let i = 0; i < steps; i++) {
-            dataSizes.push(minData + (i * stepSize));
+        
+        if (minData === 0) {
+            // Kasus khusus jika minData = 0
+            const adjustedMin = 1;
+            const stepSize = Math.max(1, Math.floor((maxData - adjustedMin) / steps));
+            
+            // Tambahkan 0 sebagai titik pertama
+            dataSizes.push(0);
+            
+            // Tambahkan titik lainnya
+            for (let i = 0; i < steps; i++) {
+                const size = adjustedMin + (i * stepSize);
+                if (size <= maxData) {
+                    dataSizes.push(size);
+                }
+            }
+            
+            if (!dataSizes.includes(maxData)) {
+                dataSizes.push(maxData);
+            }
+        } else {
+            // Kasus normal (minData > 0)
+            const stepSize = Math.max(1, Math.floor((maxData - minData) / steps));
+            
+            for (let i = 0; i < steps; i++) {
+                const size = minData + (i * stepSize);
+                if (size <= maxData) {
+                    dataSizes.push(size);
+                }
+            }
+            
+            if (!dataSizes.includes(maxData)) {
+                dataSizes.push(maxData);
+            }
         }
-        dataSizes.push(maxData);
+        
+        // Reset chart data
         timeChart.data.labels = [];
         timeChart.data.datasets[0].data = [];
         timeChart.data.datasets[1].data = [];
+        
         const iterativeTimes = [];
         const recursiveTimes = [];
+        
+        // Jalankan tes untuk setiap ukuran data
         for (let size of dataSizes) {
             statusElem.textContent = `Menguji panjang ${size}...`;
+            
+            if (size === 0) {
+                // Handle kasus khusus untuk panjang 0
+                timeChart.data.labels.push('0');
+                timeChart.data.datasets[0].data.push(0);
+                timeChart.data.datasets[1].data.push(0);
+                iterativeTimes.push(0);
+                recursiveTimes.push(0);
+                continue;
+            }
+            
             let iterativeTotal = 0;
             let recursiveTotal = 0;
+            
+            // Jalankan pengujian sebanyak currentIterations
             for (let iter = 0; iter < currentIterations; iter++) {
                 const cardNumber = generateRandomCardNumber(size);
+                
+                // Test iterative
                 const iterativeStart = performance.now();
                 for (let i = 0; i < 1000; i++) {
                     luhnIterative(cardNumber);
                 }
                 const iterativeEnd = performance.now();
                 iterativeTotal += (iterativeEnd - iterativeStart);
+                
+                // Test recursive
                 const recursiveStart = performance.now();
                 for (let i = 0; i < 1000; i++) {
                     luhnRecursive(cardNumber);
@@ -239,24 +315,45 @@ async function runTest() {
                 const recursiveEnd = performance.now();
                 recursiveTotal += (recursiveEnd - recursiveStart);
             }
+            
+            // Hitung rata-rata waktu
             const avgIterative = iterativeTotal / currentIterations;
             const avgRecursive = recursiveTotal / currentIterations;
             iterativeTimes.push(avgIterative);
             recursiveTimes.push(avgRecursive);
+            
+            // Update chart
             timeChart.data.labels.push(size.toString());
             timeChart.data.datasets[0].data.push(avgIterative);
             timeChart.data.datasets[1].data.push(avgRecursive);
             timeChart.update();
+            
+            // Update hasil sementara
             updateResults(avgIterative, avgRecursive);
+            
+            // Beri jeda agar UI tetap responsif
             await new Promise(resolve => setTimeout(resolve, 50));
         }
-        const overallIterative = iterativeTimes.reduce((a, b) => a + b, 0) / iterativeTimes.length;
-        const overallRecursive = recursiveTimes.reduce((a, b) => a + b, 0) / recursiveTimes.length;
+        
+        // Hitung rata-rata keseluruhan
+        const validIterativeTimes = iterativeTimes.filter(time => time > 0);
+        const validRecursiveTimes = recursiveTimes.filter(time => time > 0);
+        
+        const overallIterative = validIterativeTimes.length > 0 
+            ? validIterativeTimes.reduce((a, b) => a + b, 0) / validIterativeTimes.length 
+            : 0;
+        const overallRecursive = validRecursiveTimes.length > 0
+            ? validRecursiveTimes.reduce((a, b) => a + b, 0) / validRecursiveTimes.length
+            : 0;
+        
+        // Update hasil akhir
         updateResults(overallIterative, overallRecursive);
         currentDataPoints = dataSizes;
         updateChartInfo();
+        
         statusElem.textContent = 'Selesai';
         statusElem.style.color = '#10b981';
+        
     } catch (error) {
         console.error('Error running test:', error);
         statusElem.textContent = 'Error: ' + error.message;
@@ -296,25 +393,53 @@ function copyCurrentAlgorithm() {
 document.addEventListener('DOMContentLoaded', function() {
     initChart();
     updateChartInfo();
+    
     const stepSlider = document.getElementById('dataSteps');
     const stepValue = document.getElementById('stepValue');
     stepSlider.addEventListener('input', function() {
         stepValue.textContent = this.value;
     });
+    
+    // Event listener untuk minData (diubah agar bisa 0)
     document.getElementById('minData').addEventListener('change', function() {
-        const min = parseInt(this.value);
+        let min = parseInt(this.value);
         const max = parseInt(document.getElementById('maxData').value);
+        
+        if (isNaN(min)) min = 0;
+        if (min < 0) min = 0;
+        
         if (min >= max) {
             this.value = max - 10;
+            if (this.value < 0) this.value = 0;
+        } else {
+            this.value = min;
         }
-        if (min < 10) this.value = 10;
     });
+    
+    // Event listener untuk maxData
     document.getElementById('maxData').addEventListener('change', function() {
-        const max = parseInt(this.value);
+        let max = parseInt(this.value);
         const min = parseInt(document.getElementById('minData').value);
+        
+        if (isNaN(max)) max = 1000;
         if (max <= min) {
             this.value = min + 10;
         }
-        if (max > 50000) this.value = 50000;
+        if (max > 50000) {
+            this.value = 50000;
+        }
+        if (max < 10) {
+            this.value = 10;
+        }
+    });
+    
+    // Event listener untuk tombol reset
+    document.querySelector('.reset-btn').addEventListener('click', function() {
+        resetAll();
+    });
+    
+    // Event listener untuk tombol clear
+    document.querySelector('.clear-btn').addEventListener('click', function() {
+        clearChart();
     });
 });
