@@ -1,7 +1,6 @@
 let timeChart;
 let currentDataPoints = [];
 let chartType = 'line';
-let currentIterations = 5;
 let isRunning = false;
 
 function luhnIterative(cardNumber) {
@@ -137,14 +136,6 @@ function updateChartInfo() {
     document.getElementById('chartMode').textContent = chartType === 'line' ? 'Linear' : 'Bar';
 }
 
-function setIterations(count) {
-    currentIterations = count;
-    document.querySelectorAll('.iter-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    event.target.classList.add('active');
-}
-
 function toggleChartType() {
     chartType = chartType === 'line' ? 'bar' : 'line';
     timeChart.config.type = chartType;
@@ -186,9 +177,7 @@ function resetAll() {
     document.getElementById('singleTestResult').style.display = 'none';
     document.getElementById('csvResult').style.display = 'none';
     
-    document.querySelector('.iter-btn.active').classList.remove('active');
-    document.querySelector('.iter-btn:nth-child(3)').classList.add('active');
-    currentIterations = 5;
+    // Hilangkan reset iteration buttons
     
     document.getElementById('chartStatus').textContent = 'Siap';
     document.getElementById('chartStatus').style.color = '';
@@ -289,63 +278,62 @@ async function runTest() {
                 continue;
             }
             
-            let iterativeTotal = 0;
-            let recursiveTotal = 0;
-            
-            for (let iter = 0; iter < currentIterations; iter++) {
-                // Buat array dengan 'dataCount' nomor kartu
-                const cardNumbers = [];
-                for (let i = 0; i < dataCount; i++) {
-                    // Generate nomor kartu dengan panjang acak 13-19 digit
-                    const length = Math.floor(Math.random() * 7) + 13;
-                    cardNumbers.push(generateRandomCardNumber(length));
-                }
-                
-                // Test Iteratif - 100 ITERASI
-                const iterativeStart = performance.now();
-                for (let i = 0; i < 100; i++) { // 100 ITERASI
-                    for (let cardNumber of cardNumbers) {
-                        luhnIterative(cardNumber);
-                    }
-                }
-                const iterativeEnd = performance.now();
-                iterativeTotal += (iterativeEnd - iterativeStart);
-                
-                // Test Rekursif - 100 ITERASI
-                const recursiveStart = performance.now();
-                for (let i = 0; i < 100; i++) { // 100 ITERASI
-                    for (let cardNumber of cardNumbers) {
-                        luhnRecursive(cardNumber);
-                    }
-                }
-                const recursiveEnd = performance.now();
-                recursiveTotal += (recursiveEnd - recursiveStart);
+            // Buat array dengan 'dataCount' nomor kartu
+            const cardNumbers = [];
+            for (let i = 0; i < dataCount; i++) {
+                // Generate nomor kartu dengan panjang acak 13-19 digit
+                const length = Math.floor(Math.random() * 7) + 13;
+                cardNumbers.push(generateRandomCardNumber(length));
             }
             
-            const avgIterative = iterativeTotal / currentIterations;
-            const avgRecursive = recursiveTotal / currentIterations;
-            iterativeTimes.push(avgIterative);
-            recursiveTimes.push(avgRecursive);
+            // Test Iteratif - 100 ITERASI
+            const iterativeStart = performance.now();
+            for (let i = 0; i < 100; i++) { // 100 ITERASI
+                for (let cardNumber of cardNumbers) {
+                    luhnIterative(cardNumber);
+                }
+            }
+            const iterativeEnd = performance.now();
+            const iterativeTime = iterativeEnd - iterativeStart;
+            
+            // Test Rekursif - 100 ITERASI
+            const recursiveStart = performance.now();
+            for (let i = 0; i < 100; i++) { // 100 ITERASI
+                for (let cardNumber of cardNumbers) {
+                    luhnRecursive(cardNumber);
+                }
+            }
+            const recursiveEnd = performance.now();
+            const recursiveTime = recursiveEnd - recursiveStart;
+            
+            iterativeTimes.push(iterativeTime);
+            recursiveTimes.push(recursiveTime);
             
             timeChart.data.labels.push(`${dataCount}`);
-            timeChart.data.datasets[0].data.push(avgIterative);
-            timeChart.data.datasets[1].data.push(avgRecursive);
+            timeChart.data.datasets[0].data.push(iterativeTime);
+            timeChart.data.datasets[1].data.push(recursiveTime);
             timeChart.update();
             
-            updateResults(avgIterative, avgRecursive);
+            updateResults(iterativeTime, recursiveTime);
             
             await new Promise(resolve => setTimeout(resolve, 50));
         }
         
-        const validIterativeTimes = iterativeTimes.filter(time => time > 0);
-        const validRecursiveTimes = recursiveTimes.filter(time => time > 0);
+        // Hitung rata-rata keseluruhan
+        let totalIterative = 0;
+        let totalRecursive = 0;
+        let count = 0;
         
-        const overallIterative = validIterativeTimes.length > 0 
-            ? validIterativeTimes.reduce((a, b) => a + b, 0) / validIterativeTimes.length 
-            : 0;
-        const overallRecursive = validRecursiveTimes.length > 0
-            ? validRecursiveTimes.reduce((a, b) => a + b, 0) / validRecursiveTimes.length
-            : 0;
+        for (let i = 0; i < iterativeTimes.length; i++) {
+            if (iterativeTimes[i] > 0 && recursiveTimes[i] > 0) {
+                totalIterative += iterativeTimes[i];
+                totalRecursive += recursiveTimes[i];
+                count++;
+            }
+        }
+        
+        const overallIterative = count > 0 ? totalIterative / count : 0;
+        const overallRecursive = count > 0 ? totalRecursive / count : 0;
         
         updateResults(overallIterative, overallRecursive);
         currentDataPoints = dataSizes;
@@ -391,7 +379,7 @@ function testSingleCard() {
         iterativeValid = luhnIterative(cleanCardNumber);
     }
     const iterativeEnd = performance.now();
-    const iterativeTime = (iterativeEnd - iterativeStart);
+    const iterativeTime = iterativeEnd - iterativeStart;
     
     const recursiveStart = performance.now();
     let recursiveValid;
@@ -399,7 +387,7 @@ function testSingleCard() {
         recursiveValid = luhnRecursive(cleanCardNumber);
     }
     const recursiveEnd = performance.now();
-    const recursiveTime = (recursiveEnd - recursiveStart);
+    const recursiveTime = recursiveEnd - recursiveStart;
     
     displaySingleTestResult(cleanCardNumber, iterativeValid, recursiveValid, iterativeTime, recursiveTime);
     
@@ -536,37 +524,25 @@ function processCSVIncremental(allCards) {
         // Update status
         statusElem.textContent = `Memproses ${point}/${totalDataPoints} (${dataCount} data)...`;
         
-        // Test dengan iterasi yang SAMA seperti Random Test
-        const testIterations = currentIterations;
-        
-        let iterativeTotal = 0;
-        let recursiveTotal = 0;
-        
         // TEST ITERATIF - 100 ITERASI
-        for (let iter = 0; iter < testIterations; iter++) {
-            const iterativeStart = performance.now();
-            for (let i = 0; i < 100; i++) { // 100 ITERASI
-                for (let card of testCards) {
-                    luhnIterative(card.number);
-                }
+        const iterativeStart = performance.now();
+        for (let i = 0; i < 100; i++) { // 100 ITERASI
+            for (let card of testCards) {
+                luhnIterative(card.number);
             }
-            const iterativeEnd = performance.now();
-            iterativeTotal += (iterativeEnd - iterativeStart);
         }
-        const avgIterative = iterativeTotal / testIterations;
+        const iterativeEnd = performance.now();
+        const avgIterative = iterativeEnd - iterativeStart;
         
         // TEST REKURSIF - 100 ITERASI
-        for (let iter = 0; iter < testIterations; iter++) {
-            const recursiveStart = performance.now();
-            for (let i = 0; i < 100; i++) { // 100 ITERASI
-                for (let card of testCards) {
-                    luhnRecursive(card.number);
-                }
+        const recursiveStart = performance.now();
+        for (let i = 0; i < 100; i++) { // 100 ITERASI
+            for (let card of testCards) {
+                luhnRecursive(card.number);
             }
-            const recursiveEnd = performance.now();
-            recursiveTotal += (recursiveEnd - recursiveStart);
         }
-        const avgRecursive = recursiveTotal / testIterations;
+        const recursiveEnd = performance.now();
+        const avgRecursive = recursiveEnd - recursiveStart;
         
         // Tambahkan ke chart
         timeChart.data.labels.push(`${dataCount}`);
@@ -733,7 +709,4 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('.clear-btn').addEventListener('click', function() {
         clearChart();
     });
-    
-    // Initialize active button
-    document.querySelector('.iter-btn:nth-child(3)').classList.add('active');
 });
