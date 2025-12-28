@@ -3,7 +3,6 @@ let currentDataPoints = [];
 let chartType = 'line';
 let currentIterations = 5;
 let isRunning = false;
-let singleCardTestCount = 0;
 
 function luhnIterative(cardNumber) {
     let total = 0;
@@ -165,7 +164,6 @@ function clearChart() {
     
     timeChart.update();
     currentDataPoints = [];
-    singleCardTestCount = 0;
     updateChartInfo();
     updateResults(0, 0);
     
@@ -188,11 +186,10 @@ function resetAll() {
     document.getElementById('singleTestResult').style.display = 'none';
     document.getElementById('csvResult').style.display = 'none';
     
-    // Reset avg digit display
-    const avgDigitItem = document.getElementById('avgDigitItem');
-    if (avgDigitItem) avgDigitItem.style.display = 'none';
+    document.querySelector('.iter-btn.active').classList.remove('active');
+    document.querySelector('.iter-btn:nth-child(3)').classList.add('active');
+    currentIterations = 5;
     
-    setIterations(5);
     document.getElementById('chartStatus').textContent = 'Siap';
     document.getElementById('chartStatus').style.color = '';
 }
@@ -231,8 +228,6 @@ function updateResults(iterativeTime, recursiveTime) {
 }
 
 async function runTest() {
-    singleCardTestCount = 0;
-    
     if (isRunning) return;
     isRunning = true;
     const runBtn = document.querySelector('.run-btn');
@@ -282,7 +277,7 @@ async function runTest() {
         }
         
         for (let idx = 0; idx < dataSizes.length; idx++) {
-            const dataCount = dataSizes[idx]; // JUMLAH DATA
+            const dataCount = dataSizes[idx];
             statusElem.textContent = `Menguji titik ${idx + 1}/${dataSizes.length} (${dataCount} data)...`;
             
             if (dataCount === 0) {
@@ -306,9 +301,9 @@ async function runTest() {
                     cardNumbers.push(generateRandomCardNumber(length));
                 }
                 
-                // Test Iteratif - hitung semua dataCount kartu
+                // Test Iteratif - GANTI 1000 JADI 10 ITERASI SAJA
                 const iterativeStart = performance.now();
-                for (let i = 0; i < 1000; i++) {
+                for (let i = 0; i < 10; i++) { // HANYA 10 KALI, bukan 1000
                     for (let cardNumber of cardNumbers) {
                         luhnIterative(cardNumber);
                     }
@@ -316,9 +311,9 @@ async function runTest() {
                 const iterativeEnd = performance.now();
                 iterativeTotal += (iterativeEnd - iterativeStart);
                 
-                // Test Rekursif - hitung semua dataCount kartu
+                // Test Rekursif - GANTI 1000 JADI 10 ITERASI SAJA
                 const recursiveStart = performance.now();
-                for (let i = 0; i < 1000; i++) {
+                for (let i = 0; i < 10; i++) { // HANYA 10 KALI, bukan 1000
                     for (let cardNumber of cardNumbers) {
                         luhnRecursive(cardNumber);
                     }
@@ -387,8 +382,8 @@ function testSingleCard() {
         return;
     }
     
-    // Sama seperti random test: hitung 1 data
-    const iterations = 1000;
+    // GANTI 1000 JADI 10 ITERASI SAJA
+    const iterations = 10;
     
     const iterativeStart = performance.now();
     let iterativeValid;
@@ -408,27 +403,24 @@ function testSingleCard() {
     
     displaySingleTestResult(cleanCardNumber, iterativeValid, recursiveValid, iterativeTime, recursiveTime);
     
-    // Single card = 1 data point
-    addToMainChartAsTest(1, iterativeTime, recursiveTime);
+    // Tambah ke chart
+    addToChartAsTest(`Kartu`, iterativeTime, recursiveTime);
 }
 
-function addToMainChartAsTest(dataCount, iterativeTime, recursiveTime) {
-    const testNumber = singleCardTestCount + 1;
-    singleCardTestCount = testNumber;
-    
+function addToChartAsTest(label, iterativeTime, recursiveTime) {
+    // Cek apakah chart kosong atau ada data lain
     if (currentDataPoints.length > 0 && typeof currentDataPoints[0] === 'number') {
         clearChart();
-        singleCardTestCount = 1;
     }
     
-    timeChart.data.labels.push(`Tes ${testNumber}`);
+    timeChart.data.labels.push(label);
     timeChart.data.datasets[0].data.push(iterativeTime);
     timeChart.data.datasets[1].data.push(recursiveTime);
     
-    timeChart.options.scales.x.title.text = 'Nomor Tes';
+    timeChart.options.scales.x.title.text = 'Tes';
     timeChart.options.plugins.title = {
         display: true,
-        text: 'Single Card Test (1 data point)',
+        text: 'Single Card Test',
         color: '#f1f5f9',
         font: {
             size: 16,
@@ -442,7 +434,7 @@ function addToMainChartAsTest(dataCount, iterativeTime, recursiveTime) {
     
     timeChart.update();
     
-    document.getElementById('dataPoints').textContent = testNumber;
+    document.getElementById('dataPoints').textContent = timeChart.data.labels.length;
     document.getElementById('chartStatus').textContent = 'Single Card Test';
     document.getElementById('chartStatus').style.color = '#10b981';
     
@@ -450,8 +442,7 @@ function addToMainChartAsTest(dataCount, iterativeTime, recursiveTime) {
     
     currentDataPoints.push({
         type: 'singleTest',
-        testNumber: testNumber,
-        dataCount: dataCount,
+        label: label,
         iterativeTime: iterativeTime,
         recursiveTime: recursiveTime
     });
@@ -508,7 +499,7 @@ function processCSV() {
             return;
         }
         
-        // Langsung jalankan incremental test (konsisten dengan random test)
+        // Langsung jalankan incremental test
         processCSVIncremental(allCards);
     };
     
@@ -529,8 +520,8 @@ function processCSVIncremental(allCards) {
         }
     };
     
-    // Buat titik data incremental (sama seperti random test)
-    const totalDataPoints = 10;
+    // Buat 5 titik data saja (lebih sedikit)
+    const totalDataPoints = 5;
     const stepSize = Math.floor(allCards.length / totalDataPoints);
     
     const statusElem = document.getElementById('chartStatus');
@@ -546,15 +537,15 @@ function processCSVIncremental(allCards) {
         statusElem.textContent = `Memproses ${point}/${totalDataPoints} (${dataCount} data)...`;
         
         // Test dengan iterasi yang SAMA seperti Random Test
-        const testIterations = currentIterations; // Pakai currentIterations dari user!
+        const testIterations = currentIterations;
         
         let iterativeTotal = 0;
         let recursiveTotal = 0;
         
-        // TEST ITERATIF
+        // TEST ITERATIF - HANYA 10 ITERASI
         for (let iter = 0; iter < testIterations; iter++) {
             const iterativeStart = performance.now();
-            for (let i = 0; i < 1000; i++) { // SAMA PERSIS dengan random test!
+            for (let i = 0; i < 10; i++) { // HANYA 10 KALI
                 for (let card of testCards) {
                     luhnIterative(card.number);
                 }
@@ -564,10 +555,10 @@ function processCSVIncremental(allCards) {
         }
         const avgIterative = iterativeTotal / testIterations;
         
-        // TEST REKURSIF
+        // TEST REKURSIF - HANYA 10 ITERASI
         for (let iter = 0; iter < testIterations; iter++) {
             const recursiveStart = performance.now();
-            for (let i = 0; i < 1000; i++) { // SAMA PERSIS dengan random test!
+            for (let i = 0; i < 10; i++) { // HANYA 10 KALI
                 for (let card of testCards) {
                     luhnRecursive(card.number);
                 }
