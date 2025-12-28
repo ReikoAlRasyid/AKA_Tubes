@@ -53,7 +53,7 @@ function initChart() {
             labels: [],
             datasets: [
                 {
-                    label: 'Iteratif (Data Acak)',
+                    label: 'Iteratif (Random)',
                     data: [],
                     borderColor: '#3b82f6',
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -62,7 +62,7 @@ function initChart() {
                     tension: 0.4
                 },
                 {
-                    label: 'Rekursif (Data Acak)',
+                    label: 'Rekursif (Random)',
                     data: [],
                     borderColor: '#8b5cf6',
                     backgroundColor: 'rgba(139, 92, 246, 0.1)',
@@ -71,7 +71,7 @@ function initChart() {
                     tension: 0.4
                 },
                 {
-                    label: 'Iteratif (Single Card)',
+                    label: 'Iteratif (Single)',
                     data: [],
                     borderColor: '#10b981',
                     backgroundColor: 'rgba(16, 185, 129, 0.1)',
@@ -83,7 +83,7 @@ function initChart() {
                     showLine: false
                 },
                 {
-                    label: 'Rekursif (Single Card)',
+                    label: 'Rekursif (Single)',
                     data: [],
                     borderColor: '#ef4444',
                     backgroundColor: 'rgba(239, 68, 68, 0.1)',
@@ -130,11 +130,6 @@ function initChart() {
                         color: '#f1f5f9',
                         font: {
                             size: 11
-                        },
-                        filter: function(item, chart) {
-                            // Hanya tampilkan legend yang memiliki data
-                            const dataset = chart.data.datasets[item.datasetIndex];
-                            return dataset.data.length > 0;
                         }
                     }
                 },
@@ -207,10 +202,11 @@ function toggleChartType() {
 }
 
 function clearChart() {
+    if (!timeChart) return;
+    
     timeChart.data.labels = [];
     timeChart.data.datasets.forEach(dataset => {
         dataset.data = [];
-        if (dataset.counts) dataset.counts = [];
     });
     
     timeChart.options.scales.y.min = 0;
@@ -220,10 +216,6 @@ function clearChart() {
     currentDataPoints = [];
     updateChartInfo();
     updateResults(0, 0);
-    
-    // Reset flags
-    singleCardTested = false;
-    csvDataProcessed = false;
 }
 
 function resetAll() {
@@ -858,4 +850,5 @@ document.addEventListener('DOMContentLoaded', function() {
         clearChart();
     });
 });
+
 
