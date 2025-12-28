@@ -217,7 +217,7 @@ function updateResults(iterativeTime, recursiveTime) {
     }
 }
 
-// Fungsi untuk menambahkan titik ke grafik utama (DIPERBAIKI)
+// Fungsi untuk menambahkan titik ke grafik utama
 function addToChart(dataSize, iterativeTime, recursiveTime, label = null) {
     // Gunakan label kustom jika tersedia
     const dataLabel = label || dataSize.toString();
@@ -284,7 +284,7 @@ async function runTest() {
         const iterativeTimes = [];
         const recursiveTimes = [];
         
-        // Buat array ukuran data dengan cara yang lebih sederhana
+        // Buat array ukuran data
         const dataSizes = [];
         
         if (steps <= 1) {
@@ -319,7 +319,7 @@ async function runTest() {
             
             // Jalankan pengujian sebanyak currentIterations
             for (let iter = 0; iter < currentIterations; iter++) {
-                const cardNumber = generateRandomCardNumber(16); // Generate 16 digit untuk tes batch
+                const cardNumber = generateRandomCardNumber(16);
                 
                 // Test iterative untuk batch
                 const iterativeStart = performance.now();
@@ -393,7 +393,7 @@ document.getElementById('csvUpload').addEventListener('change', function(e) {
     }
 });
 
-// Fungsi untuk menguji satu kartu (DIPERBAIKI)
+// FUNGSI TEST SINGLE CARD - DIPERBAIKI
 function testSingleCard() {
     const cardNumber = document.getElementById('singleCardInput').value.trim();
     
@@ -434,7 +434,7 @@ function testSingleCard() {
     // Tampilkan hasil
     displaySingleTestResult(cleanCardNumber, iterativeValid, recursiveValid, iterativeTime, recursiveTime);
     
-    // PERBAIKAN: Tambahkan ke grafik dengan label "1 card" (1 kartu)
+    // PERBAIKAN: SELALU tambahkan sebagai "1 card" ke grafik
     addToChart(1, iterativeTime, recursiveTime, "1 card");
 }
 
@@ -454,14 +454,14 @@ function displaySingleTestResult(cardNumber, iterativeValid, recursiveValid, ite
         validityStatus.textContent = 'INVALID';
         validityStatus.style.color = '#ef4444';
     } else {
-        validityStatus.textContent = 'KONSISTEN';
+        validityStatus.textContent = 'TIDAK KONSISTEN';
         validityStatus.style.color = '#f59e0b';
     }
     
     resultDiv.style.display = 'block';
 }
 
-// Fungsi untuk memproses CSV (DIPERBAIKI)
+// Fungsi untuk memproses CSV
 function processCSV() {
     const fileInput = document.getElementById('csvUpload');
     if (!fileInput.files.length) return;
@@ -513,7 +513,7 @@ function processCSV() {
         // Tampilkan hasil
         displayCSVResult(cardNumbers.length, iterativeValidCount, recursiveValidCount, iterativeTime, recursiveTime);
         
-        // PERBAIKAN: Tambahkan ke grafik dengan jumlah kartu
+        // Tambahkan ke grafik dengan jumlah kartu
         addToChart(cardNumbers.length, iterativeTime, recursiveTime, `${cardNumbers.length} cards`);
     };
     
