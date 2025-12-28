@@ -301,9 +301,9 @@ async function runTest() {
                     cardNumbers.push(generateRandomCardNumber(length));
                 }
                 
-                // Test Iteratif - GANTI 1000 JADI 10 ITERASI SAJA
+                // Test Iteratif - 100 ITERASI
                 const iterativeStart = performance.now();
-                for (let i = 0; i < 10; i++) { // HANYA 10 KALI, bukan 1000
+                for (let i = 0; i < 100; i++) { // 100 ITERASI
                     for (let cardNumber of cardNumbers) {
                         luhnIterative(cardNumber);
                     }
@@ -311,9 +311,9 @@ async function runTest() {
                 const iterativeEnd = performance.now();
                 iterativeTotal += (iterativeEnd - iterativeStart);
                 
-                // Test Rekursif - GANTI 1000 JADI 10 ITERASI SAJA
+                // Test Rekursif - 100 ITERASI
                 const recursiveStart = performance.now();
-                for (let i = 0; i < 10; i++) { // HANYA 10 KALI, bukan 1000
+                for (let i = 0; i < 100; i++) { // 100 ITERASI
                     for (let cardNumber of cardNumbers) {
                         luhnRecursive(cardNumber);
                     }
@@ -382,8 +382,8 @@ function testSingleCard() {
         return;
     }
     
-    // GANTI 1000 JADI 10 ITERASI SAJA
-    const iterations = 10;
+    // 100 ITERASI
+    const iterations = 100;
     
     const iterativeStart = performance.now();
     let iterativeValid;
@@ -520,8 +520,8 @@ function processCSVIncremental(allCards) {
         }
     };
     
-    // Buat 5 titik data saja (lebih sedikit)
-    const totalDataPoints = 5;
+    // Buat 10 titik data
+    const totalDataPoints = 10;
     const stepSize = Math.floor(allCards.length / totalDataPoints);
     
     const statusElem = document.getElementById('chartStatus');
@@ -542,10 +542,10 @@ function processCSVIncremental(allCards) {
         let iterativeTotal = 0;
         let recursiveTotal = 0;
         
-        // TEST ITERATIF - HANYA 10 ITERASI
+        // TEST ITERATIF - 100 ITERASI
         for (let iter = 0; iter < testIterations; iter++) {
             const iterativeStart = performance.now();
-            for (let i = 0; i < 10; i++) { // HANYA 10 KALI
+            for (let i = 0; i < 100; i++) { // 100 ITERASI
                 for (let card of testCards) {
                     luhnIterative(card.number);
                 }
@@ -555,10 +555,10 @@ function processCSVIncremental(allCards) {
         }
         const avgIterative = iterativeTotal / testIterations;
         
-        // TEST REKURSIF - HANYA 10 ITERASI
+        // TEST REKURSIF - 100 ITERASI
         for (let iter = 0; iter < testIterations; iter++) {
             const recursiveStart = performance.now();
-            for (let i = 0; i < 10; i++) { // HANYA 10 KALI
+            for (let i = 0; i < 100; i++) { // 100 ITERASI
                 for (let card of testCards) {
                     luhnRecursive(card.number);
                 }
