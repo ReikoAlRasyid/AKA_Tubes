@@ -117,10 +117,6 @@ function initChart() {
                     ticks: {
                         color: '#94a3b8',
                         callback: function(value) {
-                            if (value < 0.001) return value.toFixed(6) + ' ms';
-                            if (value < 0.01) return value.toFixed(5) + ' ms';
-                            if (value < 0.1) return value.toFixed(4) + ' ms';
-                            if (value < 1) return value.toFixed(3) + ' ms';
                             return value.toFixed(2) + ' ms';
                         }
                     },
@@ -200,17 +196,8 @@ function updateResults(iterativeTime, recursiveTime) {
     const speedupElem = document.getElementById('speedupFactor');
     const speedupDesc = document.querySelector('.result-desc');
     
-    // Format angka kecil dengan lebih baik
-    const formatTime = (time) => {
-        if (time < 0.001) return time.toFixed(6) + ' ms';
-        if (time < 0.01) return time.toFixed(5) + ' ms';
-        if (time < 0.1) return time.toFixed(4) + ' ms';
-        if (time < 1) return time.toFixed(3) + ' ms';
-        return time.toFixed(2) + ' ms';
-    };
-    
-    iterativeElem.textContent = formatTime(iterativeTime);
-    recursiveElem.textContent = formatTime(recursiveTime);
+    iterativeElem.textContent = iterativeTime.toFixed(2) + ' ms';
+    recursiveElem.textContent = recursiveTime.toFixed(2) + ' ms';
     
     const totalTime = iterativeTime + recursiveTime;
     if (totalTime > 0) {
@@ -271,7 +258,7 @@ function addToChart(dataSize, iterativeTime, recursiveTime, label = null) {
     updateResults(iterativeTime, recursiveTime);
 }
 
-// FUNGSI UTAMA UNTUK BATCH TEST - TOTAL WAKTU
+// FUNGSI UTAMA UNTUK BATCH TEST - YANG BENAR
 async function runTest() {
     if (isRunning) return;
     isRunning = true;
@@ -337,26 +324,26 @@ async function runTest() {
             for (let iter = 0; iter < currentIterations; iter++) {
                 const cardNumber = generateRandomCardNumber(16);
                 
-                // Test iterative untuk batch - TOTAL WAKTU
+                // TEST ITERATIF: Ukur waktu untuk size eksekusi
                 const iterativeStart = performance.now();
                 for (let i = 0; i < size; i++) {
                     luhnIterative(cardNumber);
                 }
                 const iterativeEnd = performance.now();
-                iterativeTotal += (iterativeEnd - iterativeStart); // TOTAL waktu untuk size eksekusi
+                iterativeTotal += (iterativeEnd - iterativeStart); // Waktu untuk size eksekusi
                 
-                // Test recursive untuk batch - TOTAL WAKTU
+                // TEST REKURSIF: Ukur waktu untuk size eksekusi
                 const recursiveStart = performance.now();
                 for (let i = 0; i < size; i++) {
                     luhnRecursive(cardNumber);
                 }
                 const recursiveEnd = performance.now();
-                recursiveTotal += (recursiveEnd - recursiveStart); // TOTAL waktu untuk size eksekusi
+                recursiveTotal += (recursiveEnd - recursiveStart); // Waktu untuk size eksekusi
             }
             
-            // Hitung rata-rata TOTAL waktu
-            const avgIterative = iterativeTotal / currentIterations;
-            const avgRecursive = recursiveTotal / currentIterations;
+            // Hitung rata-rata waktu untuk size eksekusi
+            const avgIterative = iterativeTotal / currentIterations; // Rata-rata waktu untuk size eksekusi
+            const avgRecursive = recursiveTotal / currentIterations; // Rata-rata waktu untuk size eksekusi
             
             iterativeTimes.push(avgIterative);
             recursiveTimes.push(avgRecursive);
@@ -410,7 +397,7 @@ document.getElementById('csvUpload').addEventListener('change', function(e) {
     }
 });
 
-// FUNGSI TEST SINGLE CARD - TOTAL WAKTU (KONSISTEN DENGAN BATCH TEST)
+// FUNGSI TEST SINGLE CARD - YANG BENAR
 function testSingleCard() {
     const cardNumber = document.getElementById('singleCardInput').value.trim();
     
@@ -427,32 +414,38 @@ function testSingleCard() {
         return;
     }
     
-    // Gunakan iterasi yang cukup untuk keakuratan - TOTAL WAKTU
-    const iterations = 10000;
+    // Gunakan BANYAK iterasi untuk mengukur waktu yang bermakna
+    const iterations = 100000; // 100 ribu eksekusi
     
-    // Waktu untuk iteratif - TOTAL WAKTU untuk iterations eksekusi
+    // Waktu untuk iteratif - TOTAL untuk 100000 eksekusi
     const iterativeStart = performance.now();
     let iterativeValid;
     for (let i = 0; i < iterations; i++) {
         iterativeValid = luhnIterative(cleanCardNumber);
     }
     const iterativeEnd = performance.now();
-    const iterativeTime = (iterativeEnd - iterativeStart); // TOTAL waktu
+    const iterativeTime = (iterativeEnd - iterativeStart); // Waktu untuk 100000 eksekusi
     
-    // Waktu untuk rekursif - TOTAL WAKTU untuk iterations eksekusi
+    // Waktu untuk rekursif - TOTAL untuk 100000 eksekusi
     const recursiveStart = performance.now();
     let recursiveValid;
     for (let i = 0; i < iterations; i++) {
         recursiveValid = luhnRecursive(cleanCardNumber);
     }
     const recursiveEnd = performance.now();
-    const recursiveTime = (recursiveEnd - recursiveStart); // TOTAL waktu
+    const recursiveTime = (recursiveEnd - recursiveStart); // Waktu untuk 100000 eksekusi
     
-    // Tampilkan hasil (total waktu)
+    // Tampilkan hasil (total waktu untuk 100000 eksekusi)
     displaySingleTestResult(cleanCardNumber, iterativeValid, recursiveValid, iterativeTime, recursiveTime);
     
-    // Tambahkan ke grafik sebagai 1 card dengan TOTAL waktu
-    addToChart(1, iterativeTime, recursiveTime, "1 card");
+    // Untuk grafik, konversi ke waktu per 1 eksekusi agar konsisten dengan batch test
+    // Batch test: waktu untuk size eksekusi
+    // Single card: waktu untuk 100000 eksekusi, konversi ke per 1 eksekusi
+    const iterativePerExecution = iterativeTime / iterations;
+    const recursivePerExecution = recursiveTime / iterations;
+    
+    // Tambahkan ke grafik sebagai 1 card dengan waktu per eksekusi
+    addToChart(1, iterativePerExecution * 1000, recursivePerExecution * 1000, "1 card");
 }
 
 // Fungsi untuk menampilkan hasil tes single
@@ -460,17 +453,14 @@ function displaySingleTestResult(cardNumber, iterativeValid, recursiveValid, ite
     const resultDiv = document.getElementById('singleTestResult');
     const validityStatus = document.getElementById('validityStatus');
     
-    // Format waktu untuk display
-    const formatTime = (time) => {
-        if (time < 0.001) return time.toFixed(6) + ' ms';
-        if (time < 0.01) return time.toFixed(5) + ' ms';
-        if (time < 0.1) return time.toFixed(4) + ' ms';
-        if (time < 1) return time.toFixed(3) + ' ms';
-        return time.toFixed(2) + ' ms';
-    };
+    // Hitung waktu per eksekusi untuk display
+    const iterations = 100000;
+    const iterativePerExec = iterativeTime / iterations;
+    const recursivePerExec = recursiveTime / iterations;
     
-    document.getElementById('singleIterativeTime').textContent = formatTime(iterativeTime);
-    document.getElementById('singleRecursiveTime').textContent = formatTime(recursiveTime);
+    // Tampilkan waktu per eksekusi (lebih bermakna)
+    document.getElementById('singleIterativeTime').textContent = iterativePerExec.toFixed(5) + ' ms';
+    document.getElementById('singleRecursiveTime').textContent = recursivePerExec.toFixed(5) + ' ms';
     
     // Periksa konsistensi hasil
     if (iterativeValid && recursiveValid) {
@@ -487,7 +477,7 @@ function displaySingleTestResult(cardNumber, iterativeValid, recursiveValid, ite
     resultDiv.style.display = 'block';
 }
 
-// FUNGSI PROSES CSV - TOTAL WAKTU (KONSISTEN)
+// FUNGSI PROSES CSV - YANG BENAR
 function processCSV() {
     const fileInput = document.getElementById('csvUpload');
     if (!fileInput.files.length) return;
@@ -514,7 +504,7 @@ function processCSV() {
             return;
         }
         
-        // Gunakan beberapa iterasi untuk keakuratan
+        // Jalankan beberapa iterasi untuk keakuratan
         const testIterations = 10;
         let totalIterativeTime = 0;
         let totalRecursiveTime = 0;
@@ -523,36 +513,40 @@ function processCSV() {
         
         // Jalankan beberapa iterasi untuk rata-rata
         for (let iter = 0; iter < testIterations; iter++) {
-            // Jalankan pengujian dengan algoritma iteratif - TOTAL WAKTU
+            // Jalankan pengujian dengan algoritma iteratif
             const iterativeStart = performance.now();
             for (let cardNumber of cardNumbers) {
                 if (luhnIterative(cardNumber)) {
-                    if (iter === 0) iterativeValidCount++; // Hitung valid hanya di iterasi pertama
+                    if (iter === 0) iterativeValidCount++;
                 }
             }
             const iterativeEnd = performance.now();
             totalIterativeTime += (iterativeEnd - iterativeStart);
             
-            // Jalankan pengujian dengan algoritma rekursif - TOTAL WAKTU
+            // Jalankan pengujian dengan algoritma rekursif
             const recursiveStart = performance.now();
             for (let cardNumber of cardNumbers) {
                 if (luhnRecursive(cardNumber)) {
-                    if (iter === 0) recursiveValidCount++; // Hitung valid hanya di iterasi pertama
+                    if (iter === 0) recursiveValidCount++;
                 }
             }
             const recursiveEnd = performance.now();
             totalRecursiveTime += (recursiveEnd - recursiveStart);
         }
         
-        // Hitung rata-rata TOTAL waktu
-        const avgIterativeTime = totalIterativeTime / testIterations;
-        const avgRecursiveTime = totalRecursiveTime / testIterations;
+        // Hitung rata-rata waktu untuk semua kartu
+        const avgIterativeTime = totalIterativeTime / testIterations; // Waktu untuk N kartu
+        const avgRecursiveTime = totalRecursiveTime / testIterations; // Waktu untuk N kartu
+        
+        // Hitung waktu per kartu untuk konsistensi dengan grafik
+        const iterativePerCard = avgIterativeTime / cardNumbers.length;
+        const recursivePerCard = avgRecursiveTime / cardNumbers.length;
         
         // Tampilkan hasil
         displayCSVResult(cardNumbers.length, iterativeValidCount, recursiveValidCount, avgIterativeTime, avgRecursiveTime);
         
-        // Tambahkan ke grafik - TOTAL waktu untuk semua kartu
-        addToChart(cardNumbers.length, avgIterativeTime, avgRecursiveTime, `${cardNumbers.length} cards`);
+        // Tambahkan ke grafik - waktu per kartu (konsisten dengan single card)
+        addToChart(cardNumbers.length, iterativePerCard, recursivePerCard, `${cardNumbers.length} cards`);
     };
     
     reader.readAsText(file);
@@ -562,20 +556,15 @@ function processCSV() {
 function displayCSVResult(total, iterativeValid, recursiveValid, iterativeTime, recursiveTime) {
     const resultDiv = document.getElementById('csvResult');
     
-    // Format waktu untuk display
-    const formatTime = (time) => {
-        if (time < 0.001) return time.toFixed(6) + ' ms';
-        if (time < 0.01) return time.toFixed(5) + ' ms';
-        if (time < 0.1) return time.toFixed(4) + ' ms';
-        if (time < 1) return time.toFixed(3) + ' ms';
-        return time.toFixed(2) + ' ms';
-    };
+    // Hitung waktu per kartu untuk display
+    const iterativePerCard = iterativeTime / total;
+    const recursivePerCard = recursiveTime / total;
     
     document.getElementById('totalCards').textContent = total;
     document.getElementById('validCards').textContent = iterativeValid;
     document.getElementById('invalidCards').textContent = total - iterativeValid;
-    document.getElementById('csvIterativeTime').textContent = formatTime(iterativeTime);
-    document.getElementById('csvRecursiveTime').textContent = formatTime(recursiveTime);
+    document.getElementById('csvIterativeTime').textContent = iterativePerCard.toFixed(5) + ' ms/kartu';
+    document.getElementById('csvRecursiveTime').textContent = recursivePerCard.toFixed(5) + ' ms/kartu';
     
     if (total > 0) {
         resultDiv.style.display = 'block';
