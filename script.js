@@ -458,7 +458,7 @@ function displaySingleTestResult(cardNumber, iterativeValid, recursiveValid, ite
     resultDiv.style.display = 'block';
 }
 
-// ================== CSV TEST (OPTION 2 - INCREMENTAL) ==================
+// ================== CSV TEST ==================
 
 function processCSV() {
     const fileInput = document.getElementById('csvUpload');
@@ -493,11 +493,7 @@ function processCSV() {
             `File CSV berisi ${allCards.length} nomor kartu.\n\n` +
             `Pilih mode pengujian:\n\n` +
             `OK = Incremental Test (seperti Random Test)\n` +
-            `- Grafik: Waktu vs Jumlah Data\n` +
-            `- Sumbu X: 10%, 20%, ... 100% data\n\n` +
-            `Cancel = Single Point Test\n` +
-            `- Grafik: Single CSV Test\n` +
-            `- Sumbu X: CSV Test ke-n`
+            `Cancel = Single Point Test`
         );
         
         if (mode) {
@@ -582,12 +578,6 @@ function processCSVIncremental(allCards) {
         
         // Update hasil sementara
         updateResults(avgIterative, avgRecursive);
-        
-        // Tambahkan delay kecil agar UI tidak freeze
-        if (point < totalDataPoints) {
-            // Gunakan promise untuk delay tanpa blocking
-            await new Promise(resolve => setTimeout(resolve, 100));
-        }
     }
     
     // Hitung statistik
@@ -660,7 +650,7 @@ function processCSVSinglePoint(allCards) {
         const iterativeStart = performance.now();
         for (let card of allCards) {
             if (luhnIterative(card.number)) {
-                if (iter === 0) totalValidIterative++; // Hitung valid hanya di iterasi pertama
+                if (iter === 0) totalValidIterative++;
             }
         }
         const iterativeEnd = performance.now();
@@ -670,7 +660,7 @@ function processCSVSinglePoint(allCards) {
         const recursiveStart = performance.now();
         for (let card of allCards) {
             if (luhnRecursive(card.number)) {
-                if (iter === 0) totalValidRecursive++; // Hitung valid hanya di iterasi pertama
+                if (iter === 0) totalValidRecursive++;
             }
         }
         const recursiveEnd = performance.now();
@@ -754,14 +744,19 @@ function displayCSVResult(total, iterativeValid, recursiveValid, iterativeTime, 
     
     // Tambahkan info avg length jika ada
     if (avgLength > 0) {
-        const statsDiv = document.querySelector('.csv-stats');
-        const avgLengthItem = document.createElement('div');
-        avgLengthItem.className = 'stat-item';
-        avgLengthItem.innerHTML = `
+        // Cek apakah elemen avg digit sudah ada
+        let avgElement = document.getElementById('avgDigitElement');
+        if (!avgElement) {
+            const statsDiv = document.querySelector('.csv-stats');
+            avgElement = document.createElement('div');
+            avgElement.id = 'avgDigitElement';
+            avgElement.className = 'stat-item';
+            statsDiv.appendChild(avgElement);
+        }
+        avgElement.innerHTML = `
             <span class="stat-label">Avg Digit:</span>
             <span class="stat-value">${avgLength}</span>
         `;
-        statsDiv.appendChild(avgLengthItem);
     }
     
     resultDiv.style.display = 'block';
