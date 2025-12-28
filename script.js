@@ -1,178 +1,7 @@
-// Tambahkan variabel baru di bagian atas
-let singleCardChart;
-let csvChart;
-let singleCardDataPoints = [];
-let csvDataPoints = [];
+// Variabel untuk single card test
+let singleCardTestCount = 0;
 
-// Fungsi inisialisasi grafik single card
-function initSingleCardChart() {
-    const ctx = document.getElementById('singleCardChart').getContext('2d');
-    singleCardChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: [],
-            datasets: [
-                {
-                    label: 'Iteratif',
-                    data: [],
-                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
-                    borderColor: '#3b82f6',
-                    borderWidth: 1
-                },
-                {
-                    label: 'Rekursif',
-                    data: [],
-                    backgroundColor: 'rgba(139, 92, 246, 0.8)',
-                    borderColor: '#8b5cf6',
-                    borderWidth: 1
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'top',
-                    labels: {
-                        color: '#f1f5f9',
-                        font: {
-                            size: 12
-                        }
-                    }
-                },
-                title: {
-                    display: true,
-                    text: 'Single Card Test',
-                    color: '#f1f5f9',
-                    font: {
-                        size: 14,
-                        weight: 'bold'
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Nomor Tes',
-                        color: '#94a3b8'
-                    },
-                    grid: {
-                        color: 'rgba(148, 163, 184, 0.1)'
-                    },
-                    ticks: {
-                        color: '#94a3b8'
-                    }
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Waktu (ms)',
-                        color: '#94a3b8'
-                    },
-                    grid: {
-                        color: 'rgba(148, 163, 184, 0.1)'
-                    },
-                    ticks: {
-                        color: '#94a3b8',
-                        callback: function(value) {
-                            return value.toFixed(2) + ' ms';
-                        }
-                    },
-                    beginAtZero: true,
-                    min: 0
-                }
-            }
-        }
-    });
-}
-
-// Fungsi inisialisasi grafik CSV
-function initCSVChart() {
-    const ctx = document.getElementById('csvChart').getContext('2d');
-    csvChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: [],
-            datasets: [
-                {
-                    label: 'Iteratif',
-                    data: [],
-                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
-                    borderColor: '#3b82f6',
-                    borderWidth: 1
-                },
-                {
-                    label: 'Rekursif',
-                    data: [],
-                    backgroundColor: 'rgba(139, 92, 246, 0.8)',
-                    borderColor: '#8b5cf6',
-                    borderWidth: 1
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'top',
-                    labels: {
-                        color: '#f1f5f9',
-                        font: {
-                            size: 12
-                        }
-                    }
-                },
-                title: {
-                    display: true,
-                    text: 'CSV Test',
-                    color: '#f1f5f9',
-                    font: {
-                        size: 14,
-                        weight: 'bold'
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Tes CSV',
-                        color: '#94a3b8'
-                    },
-                    grid: {
-                        color: 'rgba(148, 163, 184, 0.1)'
-                    },
-                    ticks: {
-                        color: '#94a3b8'
-                    }
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Waktu (ms)',
-                        color: '#94a3b8'
-                    },
-                    grid: {
-                        color: 'rgba(148, 163, 184, 0.1)'
-                    },
-                    ticks: {
-                        color: '#94a3b8',
-                        callback: function(value) {
-                            return value.toFixed(2) + ' ms';
-                        }
-                    },
-                    beginAtZero: true,
-                    min: 0
-                }
-            }
-        }
-    });
-}
-
-// Modifikasi fungsi testSingleCard untuk update grafik
+// Fungsi testSingleCard yang diperbaiki
 function testSingleCard() {
     const cardNumber = document.getElementById('singleCardInput').value.trim();
     
@@ -213,59 +42,65 @@ function testSingleCard() {
     // Tampilkan hasil
     displaySingleTestResult(cleanCardNumber, iterativeValid, recursiveValid, iterativeTime, recursiveTime);
     
-    // Tambahkan ke grafik single card
-    addToSingleCardChart(iterativeTime, recursiveTime);
-    
-    // Tambahkan juga ke grafik utama
-    addToMainChart(cleanCardNumber.length, iterativeTime, recursiveTime);
+    // Tambahkan ke grafik utama (sebagai tes baru)
+    addToMainChartAsTest(iterativeTime, recursiveTime);
 }
 
-// Fungsi untuk menambahkan data ke grafik single card
-function addToSingleCardChart(iterativeTime, recursiveTime) {
-    // Tambahkan label baru (nomor urut tes)
-    const testNumber = singleCardChart.data.labels.length + 1;
-    singleCardChart.data.labels.push(`Tes ${testNumber}`);
+// Fungsi untuk menambahkan ke grafik utama sebagai TES (bukan berdasarkan digit)
+function addToMainChartAsTest(iterativeTime, recursiveTime) {
+    // Tambahkan label baru (tes ke-berapa)
+    const testNumber = singleCardTestCount + 1;
+    singleCardTestCount = testNumber;
     
-    // Tambahkan data
-    singleCardChart.data.datasets[0].data.push(iterativeTime);
-    singleCardChart.data.datasets[1].data.push(recursiveTime);
+    // Cek apakah grafik utama kosong atau berisi data range digit
+    if (currentDataPoints.length > 0 && typeof currentDataPoints[0] === 'number') {
+        // Jika grafik utama berisi data range digit, kita perlu reset
+        clearChart();
+        singleCardTestCount = 1; // Reset counter
+    }
     
-    // Update chart
-    singleCardChart.update();
+    // Tambahkan ke grafik
+    timeChart.data.labels.push(`Tes ${testNumber}`);
+    timeChart.data.datasets[0].data.push(iterativeTime);
+    timeChart.data.datasets[1].data.push(recursiveTime);
     
-    // Simpan data point
-    singleCardDataPoints.push({
+    // Update judul dan skala
+    timeChart.options.scales.x.title.text = 'Nomor Tes';
+    timeChart.options.plugins.title = {
+        display: true,
+        text: 'Single Card Test',
+        color: '#f1f5f9',
+        font: {
+            size: 16,
+            weight: 'bold'
+        }
+    };
+    
+    // Auto adjust skala Y
+    const allData = [...timeChart.data.datasets[0].data, ...timeChart.data.datasets[1].data];
+    const maxValue = Math.max(...allData);
+    timeChart.options.scales.y.suggestedMax = maxValue * 1.2; // 20% lebih tinggi
+    
+    timeChart.update();
+    
+    // Update info chart
+    document.getElementById('dataPoints').textContent = testNumber;
+    document.getElementById('chartStatus').textContent = 'Single Card Test';
+    document.getElementById('chartStatus').style.color = '#10b981';
+    
+    // Update hasil keseluruhan
+    updateResults(iterativeTime, recursiveTime);
+    
+    // Simpan sebagai tes (bukan digit)
+    currentDataPoints.push({
+        type: 'singleTest',
         testNumber: testNumber,
         iterativeTime: iterativeTime,
-        recursiveTime: recursiveTime,
-        timestamp: new Date().toLocaleTimeString()
+        recursiveTime: recursiveTime
     });
 }
 
-// Fungsi untuk menambahkan data ke grafik CSV
-function addToCSVChart(totalCards, iterativeTime, recursiveTime) {
-    // Tambahkan label baru (nama file atau urutan tes)
-    const testNumber = csvChart.data.labels.length + 1;
-    csvChart.data.labels.push(`CSV ${testNumber} (${totalCards} kartu)`);
-    
-    // Tambahkan data
-    csvChart.data.datasets[0].data.push(iterativeTime);
-    csvChart.data.datasets[1].data.push(recursiveTime);
-    
-    // Update chart
-    csvChart.update();
-    
-    // Simpan data point
-    csvDataPoints.push({
-        testNumber: testNumber,
-        totalCards: totalCards,
-        iterativeTime: iterativeTime,
-        recursiveTime: recursiveTime,
-        timestamp: new Date().toLocaleTimeString()
-    });
-}
-
-// Modifikasi fungsi processCSV untuk update grafik
+// Fungsi untuk processCSV yang diperbaiki
 function processCSV() {
     const fileInput = document.getElementById('csvUpload');
     if (!fileInput.files.length) return;
@@ -277,8 +112,6 @@ function processCSV() {
         const content = e.target.result;
         const lines = content.split('\n');
         
-        let validCount = 0;
-        let invalidCount = 0;
         const cardNumbers = [];
         
         // Parse data
@@ -319,400 +152,71 @@ function processCSV() {
         // Tampilkan hasil
         displayCSVResult(cardNumbers.length, iterativeValidCount, recursiveValidCount, iterativeTime, recursiveTime);
         
-        // Tambahkan ke grafik CSV
-        addToCSVChart(cardNumbers.length, iterativeTime, recursiveTime);
-        
-        // Tambahkan juga ke grafik utama (rata-rata waktu per kartu)
-        const avgIterativeTime = iterativeTime / cardNumbers.length;
-        const avgRecursiveTime = recursiveTime / cardNumbers.length;
-        addToMainChart(cardNumbers[0].length, avgIterativeTime, avgRecursiveTime);
+        // Tambahkan ke grafik utama sebagai tes CSV
+        addToMainChartAsCSVTest(cardNumbers.length, iterativeTime, recursiveTime);
     };
     
     reader.readAsText(file);
 }
 
-// Fungsi untuk menambahkan ke grafik utama
-function addToMainChart(dataLength, iterativeTime, recursiveTime) {
-    // Cek apakah panjang data sudah ada di chart
-    const existingIndex = timeChart.data.labels.indexOf(dataLength.toString());
-    
-    if (existingIndex >= 0) {
-        // Update nilai yang sudah ada (rata-rata)
-        const oldIterative = timeChart.data.datasets[0].data[existingIndex];
-        const oldRecursive = timeChart.data.datasets[1].data[existingIndex];
-        timeChart.data.datasets[0].data[existingIndex] = (oldIterative + iterativeTime) / 2;
-        timeChart.data.datasets[1].data[existingIndex] = (oldRecursive + recursiveTime) / 2;
-    } else {
-        // Tambahkan titik baru
-        timeChart.data.labels.push(dataLength.toString());
-        timeChart.data.datasets[0].data.push(iterativeTime);
-        timeChart.data.datasets[1].data.push(recursiveTime);
-        
-        // Update jumlah data points
-        currentDataPoints.push(dataLength);
-        updateChartInfo();
+// Fungsi untuk menambahkan CSV test ke grafik utama
+function addToMainChartAsCSVTest(totalCards, iterativeTime, recursiveTime) {
+    // Cek apakah grafik utama kosong atau berisi data range digit
+    if (currentDataPoints.length > 0 && typeof currentDataPoints[0] === 'number') {
+        // Jika grafik utama berisi data range digit, kita perlu reset
+        clearChart();
     }
     
-    // Update chart
+    // Hitung tes CSV ke-berapa
+    const csvTestCount = currentDataPoints.filter(p => p.type === 'csvTest').length + 1;
+    
+    // Tambahkan ke grafik
+    timeChart.data.labels.push(`CSV ${csvTestCount}`);
+    timeChart.data.datasets[0].data.push(iterativeTime);
+    timeChart.data.datasets[1].data.push(recursiveTime);
+    
+    // Update judul dan skala
+    timeChart.options.scales.x.title.text = 'Tes CSV';
+    timeChart.options.plugins.title = {
+        display: true,
+        text: 'CSV Test (' + totalCards + ' kartu)',
+        color: '#f1f5f9',
+        font: {
+            size: 16,
+            weight: 'bold'
+        }
+    };
+    
+    // Auto adjust skala Y
+    const allData = [...timeChart.data.datasets[0].data, ...timeChart.data.datasets[1].data];
+    const maxValue = Math.max(...allData);
+    timeChart.options.scales.y.suggestedMax = maxValue * 1.2;
+    
     timeChart.update();
+    
+    // Update info chart
+    document.getElementById('dataPoints').textContent = currentDataPoints.length + 1;
+    document.getElementById('chartStatus').textContent = 'CSV Test';
+    document.getElementById('chartStatus').style.color = '#3b82f6';
     
     // Update hasil keseluruhan
     updateResults(iterativeTime, recursiveTime);
-}
-
-// Fungsi untuk menampilkan hasil tes single
-function displaySingleTestResult(cardNumber, iterativeValid, recursiveValid, iterativeTime, recursiveTime) {
-    const resultDiv = document.getElementById('singleTestResult');
-    const validityStatus = document.getElementById('validityStatus');
     
-    document.getElementById('singleIterativeTime').textContent = iterativeTime.toFixed(2) + ' ms';
-    document.getElementById('singleRecursiveTime').textContent = recursiveTime.toFixed(2) + ' ms';
-    
-    // Periksa konsistensi hasil
-    if (iterativeValid && recursiveValid) {
-        validityStatus.textContent = 'VALID';
-        validityStatus.style.color = '#10b981';
-    } else if (!iterativeValid && !recursiveValid) {
-        validityStatus.textContent = 'INVALID';
-        validityStatus.style.color = '#ef4444';
-    } else {
-        validityStatus.textContent = 'KONSISTEN';
-        validityStatus.style.color = '#f59e0b';
-    }
-    
-    resultDiv.style.display = 'block';
-}
-
-// Fungsi untuk menampilkan hasil CSV
-function displayCSVResult(total, iterativeValid, recursiveValid, iterativeTime, recursiveTime) {
-    const resultDiv = document.getElementById('csvResult');
-    
-    document.getElementById('totalCards').textContent = total;
-    document.getElementById('validCards').textContent = iterativeValid;
-    document.getElementById('invalidCards').textContent = total - iterativeValid;
-    document.getElementById('csvIterativeTime').textContent = iterativeTime.toFixed(2) + ' ms';
-    document.getElementById('csvRecursiveTime').textContent = recursiveTime.toFixed(2) + ' ms';
-    
-    resultDiv.style.display = 'block';
-}
-
-// Modifikasi fungsi resetAll untuk reset semua grafik
-function resetAll() {
-    clearChart();
-    
-    // Reset single card chart
-    if (singleCardChart) {
-        singleCardChart.data.labels = [];
-        singleCardChart.data.datasets[0].data = [];
-        singleCardChart.data.datasets[1].data = [];
-        singleCardChart.update();
-    }
-    
-    // Reset CSV chart
-    if (csvChart) {
-        csvChart.data.labels = [];
-        csvChart.data.datasets[0].data = [];
-        csvChart.data.datasets[1].data = [];
-        csvChart.update();
-    }
-    
-    // Reset data points
-    singleCardDataPoints = [];
-    csvDataPoints = [];
-    
-    // Reset input values
-    document.getElementById('minData').value = 0;
-    document.getElementById('maxData').value = 1000;
-    document.getElementById('dataSteps').value = 10;
-    document.getElementById('stepValue').textContent = '10';
-    document.getElementById('singleCardInput').value = '';
-    
-    // Reset file input
-    document.getElementById('csvUpload').value = '';
-    document.getElementById('processCsvBtn').disabled = true;
-    document.getElementById('processCsvBtn').innerHTML = '<i class="fas fa-cog"></i> Proses';
-    
-    // Hide result sections
-    document.getElementById('singleTestResult').style.display = 'none';
-    document.getElementById('csvResult').style.display = 'none';
-    
-    setIterations(5);
-    document.getElementById('chartStatus').textContent = 'Siap';
-    document.getElementById('chartStatus').style.color = '';
-    
-    // Pastikan skala Y kembali ke 0
-    if (timeChart) {
-        timeChart.options.scales.y.min = 0;
-        timeChart.options.scales.y.suggestedMax = 10;
-        timeChart.update();
-    }
-}
-
-// Inisialisasi semua grafik ketika halaman dimuat
-document.addEventListener('DOMContentLoaded', function() {
-    initChart();
-    initSingleCardChart();
-    initCSVChart();
-    updateChartInfo();
-    
-    const stepSlider = document.getElementById('dataSteps');
-    const stepValue = document.getElementById('stepValue');
-    stepSlider.addEventListener('input', function() {
-        stepValue.textContent = this.value;
-    });
-    
-    // Event listener untuk minData
-    document.getElementById('minData').addEventListener('change', function() {
-        let min = parseInt(this.value);
-        const max = parseInt(document.getElementById('maxData').value);
-        
-        if (isNaN(min)) min = 0;
-        if (min < 0) min = 0;
-        
-        if (min >= max) {
-            this.value = max - 10;
-            if (this.value < 0) this.value = 0;
-        } else {
-            this.value = min;
-        }
-    });
-    
-    // Event listener untuk maxData
-    document.getElementById('maxData').addEventListener('change', function() {
-        let max = parseInt(this.value);
-        const min = parseInt(document.getElementById('minData').value);
-        
-        if (isNaN(max)) max = 1000;
-        if (max <= min) {
-            this.value = min + 10;
-        }
-        if (max > 50000) {
-            this.value = 50000;
-        }
-        if (max < 10) {
-            this.value = 10;
-        }
-    });
-    
-    // Event listener untuk upload CSV
-    document.getElementById('csvUpload').addEventListener('change', function(e) {
-        const processBtn = document.getElementById('processCsvBtn');
-        if (e.target.files.length > 0) {
-            processBtn.disabled = false;
-            processBtn.innerHTML = '<i class="fas fa-cog"></i> Proses (' + e.target.files[0].name + ')';
-        } else {
-            processBtn.disabled = true;
-            processBtn.innerHTML = '<i class="fas fa-cog"></i> Proses';
-        }
-    });
-    
-    // Event listener untuk tombol reset
-    document.querySelector('.reset-btn').addEventListener('click', function() {
-        resetAll();
-    });
-    
-    // Event listener untuk tombol clear
-    document.querySelector('.clear-btn').addEventListener('click', function() {
-        clearChart();
-    });
-});
-
-// Fungsi-fungsi yang sudah ada sebelumnya (tetap dipertahankan)
-let timeChart;
-let currentDataPoints = [];
-let chartType = 'line';
-let currentIterations = 5;
-let isRunning = false;
-
-function luhnIterative(cardNumber) {
-    let total = 0;
-    let isEven = false;
-    for (let i = cardNumber.length - 1; i >= 0; i--) {
-        let digit = parseInt(cardNumber[i]);
-        if (isEven) {
-            digit *= 2;
-            if (digit > 9) digit -= 9;
-        }
-        total += digit;
-        isEven = !isEven;
-    }
-    return total % 10 === 0;
-}
-
-function luhnRecursive(cardNumber, index = 0, total = 0, isEven = false) {
-    if (index >= cardNumber.length) {
-        return total % 10 === 0;
-    }
-    const reverseIndex = cardNumber.length - index - 1;
-    let digit = parseInt(cardNumber[reverseIndex]);
-    if (isEven) {
-        digit *= 2;
-        if (digit > 9) digit -= 9;
-    }
-    return luhnRecursive(cardNumber, index + 1, total + digit, !isEven);
-}
-
-function generateRandomCardNumber(length) {
-    if (length <= 0) return "";
-    let result = '';
-    for (let i = 0; i < length; i++) {
-        result += Math.floor(Math.random() * 10);
-    }
-    return result;
-}
-
-function initChart() {
-    const ctx = document.getElementById('timeChart').getContext('2d');
-    timeChart = new Chart(ctx, {
-        type: chartType,
-        data: {
-            labels: [],
-            datasets: [
-                {
-                    label: 'Iteratif',
-                    data: [],
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4
-                },
-                {
-                    label: 'Rekursif',
-                    data: [],
-                    borderColor: '#8b5cf6',
-                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'top',
-                    labels: {
-                        color: '#f1f5f9',
-                        font: {
-                            size: 12
-                        }
-                    }
-                },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                    titleColor: '#f1f5f9',
-                    bodyColor: '#f1f5f9',
-                    borderColor: '#3b82f6',
-                    borderWidth: 1
-                }
-            },
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Panjang Data',
-                        color: '#94a3b8'
-                    },
-                    grid: {
-                        color: 'rgba(148, 163, 184, 0.1)'
-                    },
-                    ticks: {
-                        color: '#94a3b8'
-                    }
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Waktu (ms)',
-                        color: '#94a3b8'
-                    },
-                    grid: {
-                        color: 'rgba(148, 163, 184, 0.1)'
-                    },
-                    ticks: {
-                        color: '#94a3b8',
-                        callback: function(value) {
-                            return value.toFixed(2) + ' ms';
-                        }
-                    },
-                    beginAtZero: true,
-                    min: 0,
-                    suggestedMax: 10
-                }
-            }
-        }
+    // Simpan sebagai tes CSV
+    currentDataPoints.push({
+        type: 'csvTest',
+        testNumber: csvTestCount,
+        totalCards: totalCards,
+        iterativeTime: iterativeTime,
+        recursiveTime: recursiveTime
     });
 }
 
-function updateChartInfo() {
-    document.getElementById('dataPoints').textContent = currentDataPoints.length;
-    document.getElementById('chartMode').textContent = chartType === 'line' ? 'Linear' : 'Bar';
-}
-
-function setIterations(count) {
-    currentIterations = count;
-    document.querySelectorAll('.iter-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    event.target.classList.add('active');
-}
-
-function toggleChartType() {
-    chartType = chartType === 'line' ? 'bar' : 'line';
-    timeChart.config.type = chartType;
-    timeChart.update();
-    updateChartInfo();
-}
-
-function clearChart() {
-    timeChart.data.labels = [];
-    timeChart.data.datasets[0].data = [];
-    timeChart.data.datasets[1].data = [];
-    
-    timeChart.options.scales.y.min = 0;
-    timeChart.options.scales.y.suggestedMax = 10;
-    
-    timeChart.update();
-    currentDataPoints = [];
-    updateChartInfo();
-    updateResults(0, 0);
-}
-
-function updateResults(iterativeTime, recursiveTime) {
-    const iterativeElem = document.getElementById('iterativeTime');
-    const recursiveElem = document.getElementById('recursiveTime');
-    const iterativePercent = document.getElementById('iterativePercent');
-    const recursivePercent = document.getElementById('recursivePercent');
-    const speedupElem = document.getElementById('speedupFactor');
-    const speedupDesc = document.querySelector('.result-desc');
-    iterativeElem.textContent = iterativeTime.toFixed(2) + ' ms';
-    recursiveElem.textContent = recursiveTime.toFixed(2) + ' ms';
-    const totalTime = iterativeTime + recursiveTime;
-    if (totalTime > 0) {
-        const iterativePercentage = ((iterativeTime / totalTime) * 100).toFixed(1);
-        const recursivePercentage = ((recursiveTime / totalTime) * 100).toFixed(1);
-        iterativePercent.textContent = iterativePercentage + '%';
-        recursivePercent.textContent = recursivePercentage + '%';
-        if (iterativeTime > 0 && recursiveTime > 0) {
-            const speedup = recursiveTime / iterativeTime;
-            speedupElem.textContent = speedup.toFixed(2) + 'x';
-            if (speedup > 1) {
-                speedupDesc.textContent = 'Iteratif lebih cepat';
-            } else if (speedup < 1) {
-                speedupDesc.textContent = 'Rekursif lebih cepat';
-            } else {
-                speedupDesc.textContent = 'Sama cepat';
-            }
-        }
-    }
-}
-
+// Modifikasi fungsi runTest untuk reset singleCardTestCount
 async function runTest() {
+    // Reset single card test count saat menjalankan test range
+    singleCardTestCount = 0;
+    
     if (isRunning) return;
     isRunning = true;
     const runBtn = document.querySelector('.run-btn');
@@ -731,9 +235,16 @@ async function runTest() {
         if (maxData < minData) maxData = minData + 10;
         if (maxData > 50000) maxData = 50000;
         
+        // Reset chart data
         timeChart.data.labels = [];
         timeChart.data.datasets[0].data = [];
         timeChart.data.datasets[1].data = [];
+        
+        // Reset title dan skala ke default
+        timeChart.options.scales.x.title.text = 'Panjang Data';
+        timeChart.options.plugins.title = {
+            display: false
+        };
         
         const iterativeTimes = [];
         const recursiveTimes = [];
@@ -813,6 +324,8 @@ async function runTest() {
             : 0;
         
         updateResults(overallIterative, overallRecursive);
+        
+        // Simpan sebagai data range (angka saja)
         currentDataPoints = dataSizes;
         updateChartInfo();
         
@@ -830,27 +343,144 @@ async function runTest() {
     }
 }
 
-function showAlgorithm(type) {
-    document.querySelectorAll('.algo-tab').forEach(tab => {
-        tab.classList.remove('active');
-    });
-    document.querySelectorAll('.algorithm-code').forEach(code => {
-        code.classList.remove('active');
-    });
-    event.target.classList.add('active');
-    document.getElementById(`${type}-code`).classList.add('active');
+// Modifikasi fungsi clearChart
+function clearChart() {
+    timeChart.data.labels = [];
+    timeChart.data.datasets[0].data = [];
+    timeChart.data.datasets[1].data = [];
+    
+    // Reset title dan skala
+    timeChart.options.scales.x.title.text = 'Panjang Data';
+    timeChart.options.plugins.title = {
+        display: false
+    };
+    timeChart.options.scales.y.min = 0;
+    timeChart.options.scales.y.suggestedMax = 10;
+    
+    timeChart.update();
+    currentDataPoints = [];
+    singleCardTestCount = 0;
+    updateChartInfo();
+    updateResults(0, 0);
+    
+    // Reset status
+    document.getElementById('chartStatus').textContent = 'Siap';
+    document.getElementById('chartStatus').style.color = '';
 }
 
-function copyCurrentAlgorithm() {
-    const activeCode = document.querySelector('.algorithm-code.active');
-    const codeText = activeCode.textContent;
-    navigator.clipboard.writeText(codeText).then(() => {
-        const copyBtn = document.querySelector('.copy-btn');
-        const originalText = copyBtn.innerHTML;
-        copyBtn.innerHTML = '<i class="fas fa-check"></i> Tersalin!';
-        copyBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-        setTimeout(() => {
-            copyBtn.innerHTML = originalText;
-        }, 2000);
+// Modifikasi fungsi resetAll
+function resetAll() {
+    clearChart();
+    
+    // Reset input values
+    document.getElementById('minData').value = 0;
+    document.getElementById('maxData').value = 1000;
+    document.getElementById('dataSteps').value = 10;
+    document.getElementById('stepValue').textContent = '10';
+    document.getElementById('singleCardInput').value = '';
+    
+    // Reset file input
+    document.getElementById('csvUpload').value = '';
+    document.getElementById('processCsvBtn').disabled = true;
+    document.getElementById('processCsvBtn').innerHTML = '<i class="fas fa-cog"></i> Proses';
+    
+    // Hide result sections
+    document.getElementById('singleTestResult').style.display = 'none';
+    document.getElementById('csvResult').style.display = 'none';
+    
+    setIterations(5);
+    document.getElementById('chartStatus').textContent = 'Siap';
+    document.getElementById('chartStatus').style.color = '';
+}
+
+// Inisialisasi chart dengan title
+function initChart() {
+    const ctx = document.getElementById('timeChart').getContext('2d');
+    timeChart = new Chart(ctx, {
+        type: chartType,
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: 'Iteratif',
+                    data: [],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                },
+                {
+                    label: 'Rekursif',
+                    data: [],
+                    borderColor: '#8b5cf6',
+                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        color: '#f1f5f9',
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                    titleColor: '#f1f5f9',
+                    bodyColor: '#f1f5f9',
+                    borderColor: '#3b82f6',
+                    borderWidth: 1
+                },
+                title: {
+                    display: false // Awalnya tidak ditampilkan
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Panjang Data',
+                        color: '#94a3b8'
+                    },
+                    grid: {
+                        color: 'rgba(148, 163, 184, 0.1)'
+                    },
+                    ticks: {
+                        color: '#94a3b8'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Waktu (ms)',
+                        color: '#94a3b8'
+                    },
+                    grid: {
+                        color: 'rgba(148, 163, 184, 0.1)'
+                    },
+                    ticks: {
+                        color: '#94a3b8',
+                        callback: function(value) {
+                            return value.toFixed(2) + ' ms';
+                        }
+                    },
+                    beginAtZero: true,
+                    min: 0,
+                    suggestedMax: 10
+                }
+            }
+        }
     });
 }
