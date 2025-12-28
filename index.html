@@ -62,13 +62,11 @@
                     <div class="config-section">
                         <div class="input-group">
                             <label><i class="fas fa-database"></i> Ukuran Data Minimum</label>
-                            <!-- UBAH: min="10" menjadi min="0" -->
                             <input type="number" id="minData" value="0" min="0" max="10000" step="10">
                         </div>
 
                         <div class="input-group">
                             <label><i class="fas fa-database"></i> Ukuran Data Maksimum</label>
-                            <!-- UBAH: min="100" menjadi min="10" -->
                             <input type="number" id="maxData" value="1000" min="10" max="50000" step="10">
                         </div>
 
@@ -98,6 +96,71 @@
                         <button class="reset-btn" onclick="resetAll()">
                             <i class="fas fa-redo"></i> RESET
                         </button>
+                    </div>
+                </section>
+
+                <section class="data-input-section">
+                    <h2><i class="fas fa-vial"></i> Input Data</h2>
+                    
+                    <div class="input-group">
+                        <label><i class="fas fa-database"></i> Pilih Data Dummy</label>
+                        <div class="dummy-buttons">
+                            <button class="dummy-btn" onclick="loadDummyData('valid16')">
+                                <i class="fas fa-credit-card"></i> Valid 16
+                            </button>
+                            <button class="dummy-btn" onclick="loadDummyData('valid13')">
+                                <i class="fas fa-credit-card"></i> Valid 13
+                            </button>
+                            <button class="dummy-btn" onclick="loadDummyData('invalid')">
+                                <i class="fas fa-times-circle"></i> Invalid
+                            </button>
+                            <button class="dummy-btn" onclick="loadDummyData('amex')">
+                                <i class="fas fa-credit-card"></i> Amex
+                            </button>
+                            <button class="dummy-btn" onclick="loadDummyData('mastercard')">
+                                <i class="fas fa-credit-card"></i> MasterCard
+                            </button>
+                            <button class="dummy-btn" onclick="loadDummyData('visa')">
+                                <i class="fas fa-credit-card"></i> VISA
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label><i class="fas fa-keyboard"></i> Input Manual</label>
+                        <textarea id="customInput" placeholder="Masukkan nomor kartu (hanya angka)..."></textarea>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <button class="test-btn" onclick="testSingleCard()">
+                                <i class="fas fa-play"></i> Test Input
+                            </button>
+                            <button class="clear-btn-small" onclick="clearCustomInput()">
+                                <i class="fas fa-times"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="test-result" id="singleTestResult" style="display: none;">
+                        <h4><i class="fas fa-chart-bar"></i> Hasil Pengujian Single</h4>
+                        <div class="result-details">
+                            <div class="result-detail">
+                                <div class="label">Iteratif</div>
+                                <div class="value" id="singleIterativeTime">0.00 ms</div>
+                                <div class="status" id="singleIterativeValid">-</div>
+                            </div>
+                            <div class="result-detail">
+                                <div class="label">Rekursif</div>
+                                <div class="value" id="singleRecursiveTime">0.00 ms</div>
+                                <div class="status" id="singleRecursiveValid">-</div>
+                            </div>
+                            <div class="result-detail">
+                                <div class="label">Percepatan</div>
+                                <div class="value" id="singleSpeedup">1.00x</div>
+                                <div class="status" id="singleSpeedupDesc">-</div>
+                            </div>
+                        </div>
+                        <div class="validation-result" id="validationResult">
+                            <!-- Status validasi akan ditampilkan di sini -->
+                        </div>
                     </div>
                 </section>
 
