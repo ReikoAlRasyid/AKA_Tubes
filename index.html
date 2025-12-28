@@ -26,10 +26,10 @@
                     <div class="chart-header">
                         <h2><i class="fas fa-chart-line"></i> Grafik Perbandingan</h2>
                         <div class="chart-controls">
-                            <button class="chart-btn" onclick="clearChart()">
+                            <button class="chart-btn" onclick="clearChart()" title="Clear Chart">
                                 <i class="fas fa-trash"></i>
                             </button>
-                            <button class="chart-btn" onclick="toggleChartType()">
+                            <button class="chart-btn" onclick="toggleChartType()" title="Toggle Chart Type">
                                 <i class="fas fa-exchange-alt"></i>
                             </button>
                         </div>
@@ -104,7 +104,7 @@
                     
                     <div class="input-group">
                         <label><i class="fas fa-credit-card"></i> Cek Nomor Kartu</label>
-                        <input type="text" id="singleCardInput" placeholder="Masukkan nomor kartu...">
+                        <input type="text" id="singleCardInput" placeholder="Masukkan nomor kartu (contoh: 4111111111111111)">
                         <button class="test-btn" onclick="testSingleCard()">
                             <i class="fas fa-search"></i> Cek Validitas
                         </button>
@@ -122,7 +122,7 @@
                             </button>
                         </div>
                         <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 5px;">
-                            Format: nomor kartu per baris
+                            Format: nomor kartu per baris (13-19 digit)
                         </div>
                     </div>
 
@@ -167,12 +167,16 @@
                                 <span class="stat-label">Waktu Rekursif:</span>
                                 <span class="stat-value" id="csvRecursiveTime">0.00 ms</span>
                             </div>
+                            <div class="stat-item" id="avgDigitItem" style="display: none;">
+                                <span class="stat-label">Rata-rata Digit:</span>
+                                <span class="stat-value" id="avgDigitValue">0</span>
+                            </div>
                         </div>
                     </div>
                 </section>
 
                 <section class="results-panel">
-                    <h2><i class="fas fa-chart-bar"></i> Hasil</h2>
+                    <h2><i class="fas fa-chart-bar"></i> Hasil Perbandingan</h2>
                     <div class="results-grid">
                         <div class="result-item">
                             <div class="result-label">Iteratif</div>
