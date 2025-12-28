@@ -232,44 +232,6 @@ async function runTest() {
         if (maxData < minData) maxData = minData + 10;
         if (maxData > 50000) maxData = 50000;
         
-        // Buat array ukuran data
-        const dataSizes = [];
-        
-        if (minData === 0) {
-            // Kasus khusus jika minData = 0
-            const adjustedMin = 1;
-            const stepSize = Math.max(1, Math.floor((maxData - adjustedMin) / steps));
-            
-            // Tambahkan 0 sebagai titik pertama
-            dataSizes.push(0);
-            
-            // Tambahkan titik lainnya
-            for (let i = 0; i < steps; i++) {
-                const size = adjustedMin + (i * stepSize);
-                if (size <= maxData) {
-                    dataSizes.push(size);
-                }
-            }
-            
-            if (!dataSizes.includes(maxData)) {
-                dataSizes.push(maxData);
-            }
-        } else {
-            // Kasus normal (minData > 0)
-            const stepSize = Math.max(1, Math.floor((maxData - minData) / steps));
-            
-            for (let i = 0; i < steps; i++) {
-                const size = minData + (i * stepSize);
-                if (size <= maxData) {
-                    dataSizes.push(size);
-                }
-            }
-            
-            if (!dataSizes.includes(maxData)) {
-                dataSizes.push(maxData);
-            }
-        }
-        
         // Reset chart data
         timeChart.data.labels = [];
         timeChart.data.datasets[0].data = [];
@@ -278,9 +240,30 @@ async function runTest() {
         const iterativeTimes = [];
         const recursiveTimes = [];
         
+        // Buat array ukuran data dengan cara yang lebih sederhana
+        const dataSizes = [];
+        
+        if (steps <= 1) {
+            // Jika steps = 1, hanya gunakan maxData
+            dataSizes.push(maxData);
+        } else {
+            // Hitung interval yang tepat
+            const interval = (maxData - minData) / (steps - 1);
+            
+            // Generate titik-titik data
+            for (let i = 0; i < steps; i++) {
+                const size = Math.round(minData + (i * interval));
+                dataSizes.push(size);
+            }
+            
+            // Pastikan titik terakhir adalah maxData
+            dataSizes[dataSizes.length - 1] = maxData;
+        }
+        
         // Jalankan tes untuk setiap ukuran data
-        for (let size of dataSizes) {
-            statusElem.textContent = `Menguji panjang ${size}...`;
+        for (let idx = 0; idx < dataSizes.length; idx++) {
+            const size = dataSizes[idx];
+            statusElem.textContent = `Menguji titik ${idx + 1}/${dataSizes.length} (panjang ${size})...`;
             
             if (size === 0) {
                 // Handle kasus khusus untuk panjang 0
@@ -351,7 +334,7 @@ async function runTest() {
         currentDataPoints = dataSizes;
         updateChartInfo();
         
-        statusElem.textContent = 'Selesai';
+        statusElem.textContent = `Selesai (${dataSizes.length} titik data)`;
         statusElem.style.color = '#10b981';
         
     } catch (error) {
@@ -443,3 +426,4 @@ document.addEventListener('DOMContentLoaded', function() {
         clearChart();
     });
 });
+
