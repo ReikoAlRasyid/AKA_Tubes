@@ -4,6 +4,10 @@ let chartType = 'line';
 let currentIterations = 5;
 let isRunning = false;
 
+// Variabel untuk tracking data
+let singleCardTested = false;
+let csvDataProcessed = false;
+
 function luhnIterative(cardNumber) {
     let total = 0;
     let isEven = false;
@@ -33,7 +37,7 @@ function luhnRecursive(cardNumber, index = 0, total = 0, isEven = false) {
 }
 
 function generateRandomCardNumber(length) {
-    if (length <= 0) return ""; // Handle kasus panjang 0
+    if (length <= 0) return "";
     let result = '';
     for (let i = 0; i < length; i++) {
         result += Math.floor(Math.random() * 10);
@@ -49,7 +53,7 @@ function initChart() {
             labels: [],
             datasets: [
                 {
-                    label: 'Iteratif',
+                    label: 'Iteratif (Data Acak)',
                     data: [],
                     borderColor: '#3b82f6',
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -58,13 +62,61 @@ function initChart() {
                     tension: 0.4
                 },
                 {
-                    label: 'Rekursif',
+                    label: 'Rekursif (Data Acak)',
                     data: [],
                     borderColor: '#8b5cf6',
                     backgroundColor: 'rgba(139, 92, 246, 0.1)',
                     borderWidth: 2,
                     fill: true,
                     tension: 0.4
+                },
+                {
+                    label: 'Iteratif (Single Card)',
+                    data: [],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 2,
+                    fill: false,
+                    pointStyle: 'circle',
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    showLine: false
+                },
+                {
+                    label: 'Rekursif (Single Card)',
+                    data: [],
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    borderWidth: 2,
+                    fill: false,
+                    pointStyle: 'triangle',
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    showLine: false
+                },
+                {
+                    label: 'Iteratif (CSV)',
+                    data: [],
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    borderWidth: 2,
+                    fill: false,
+                    pointStyle: 'rect',
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    showLine: false
+                },
+                {
+                    label: 'Rekursif (CSV)',
+                    data: [],
+                    borderColor: '#8b5cf6',
+                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                    borderWidth: 2,
+                    fill: false,
+                    pointStyle: 'rectRot',
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    showLine: false
                 }
             ]
         },
@@ -77,7 +129,12 @@ function initChart() {
                     labels: {
                         color: '#f1f5f9',
                         font: {
-                            size: 12
+                            size: 11
+                        },
+                        filter: function(item, chart) {
+                            // Hanya tampilkan legend yang memiliki data
+                            const dataset = chart.data.datasets[item.datasetIndex];
+                            return dataset.data.length > 0;
                         }
                     }
                 },
@@ -151,10 +208,11 @@ function toggleChartType() {
 
 function clearChart() {
     timeChart.data.labels = [];
-    timeChart.data.datasets[0].data = [];
-    timeChart.data.datasets[1].data = [];
+    timeChart.data.datasets.forEach(dataset => {
+        dataset.data = [];
+        if (dataset.counts) dataset.counts = [];
+    });
     
-    // Reset skala Y ke 0
     timeChart.options.scales.y.min = 0;
     timeChart.options.scales.y.suggestedMax = 10;
     
@@ -162,11 +220,14 @@ function clearChart() {
     currentDataPoints = [];
     updateChartInfo();
     updateResults(0, 0);
+    
+    // Reset flags
+    singleCardTested = false;
+    csvDataProcessed = false;
 }
 
 function resetAll() {
     clearChart();
-    // Ubah nilai default minData menjadi 0
     document.getElementById('minData').value = 0;
     document.getElementById('maxData').value = 1000;
     document.getElementById('dataSteps').value = 10;
@@ -175,12 +236,13 @@ function resetAll() {
     document.getElementById('chartStatus').textContent = 'Siap';
     document.getElementById('chartStatus').style.color = '';
     
-    // Pastikan skala Y kembali ke 0
-    if (timeChart) {
-        timeChart.options.scales.y.min = 0;
-        timeChart.options.scales.y.suggestedMax = 10;
-        timeChart.update();
-    }
+    // Reset input fields
+    document.getElementById('singleCardInput').value = '';
+    document.getElementById('csvUpload').value = '';
+    document.getElementById('processCsvBtn').disabled = true;
+    document.getElementById('processCsvBtn').innerHTML = '<i class="fas fa-cog"></i> Proses CSV';
+    document.getElementById('singleTestResult').style.display = 'none';
+    document.getElementById('csvResult').style.display = 'none';
 }
 
 function updateResults(iterativeTime, recursiveTime) {
@@ -232,31 +294,25 @@ async function runTest() {
         if (maxData < minData) maxData = minData + 10;
         if (maxData > 50000) maxData = 50000;
         
-        // Reset chart data
-        timeChart.data.labels = [];
+        // Reset hanya dataset data acak
         timeChart.data.datasets[0].data = [];
         timeChart.data.datasets[1].data = [];
+        timeChart.data.labels = [];
+        timeChart.data.datasets[0].counts = [];
+        timeChart.data.datasets[1].counts = [];
         
         const iterativeTimes = [];
         const recursiveTimes = [];
-        
-        // Buat array ukuran data dengan cara yang lebih sederhana
         const dataSizes = [];
         
         if (steps <= 1) {
-            // Jika steps = 1, hanya gunakan maxData
             dataSizes.push(maxData);
         } else {
-            // Hitung interval yang tepat
             const interval = (maxData - minData) / (steps - 1);
-            
-            // Generate titik-titik data
             for (let i = 0; i < steps; i++) {
                 const size = Math.round(minData + (i * interval));
                 dataSizes.push(size);
             }
-            
-            // Pastikan titik terakhir adalah maxData
             dataSizes[dataSizes.length - 1] = maxData;
         }
         
@@ -266,7 +322,6 @@ async function runTest() {
             statusElem.textContent = `Menguji titik ${idx + 1}/${dataSizes.length} (panjang ${size})...`;
             
             if (size === 0) {
-                // Handle kasus khusus untuk panjang 0
                 timeChart.data.labels.push('0');
                 timeChart.data.datasets[0].data.push(0);
                 timeChart.data.datasets[1].data.push(0);
@@ -278,7 +333,6 @@ async function runTest() {
             let iterativeTotal = 0;
             let recursiveTotal = 0;
             
-            // Jalankan pengujian sebanyak currentIterations
             for (let iter = 0; iter < currentIterations; iter++) {
                 const cardNumber = generateRandomCardNumber(size);
                 
@@ -299,26 +353,21 @@ async function runTest() {
                 recursiveTotal += (recursiveEnd - recursiveStart);
             }
             
-            // Hitung rata-rata waktu
             const avgIterative = iterativeTotal / currentIterations;
             const avgRecursive = recursiveTotal / currentIterations;
             iterativeTimes.push(avgIterative);
             recursiveTimes.push(avgRecursive);
             
-            // Update chart
             timeChart.data.labels.push(size.toString());
             timeChart.data.datasets[0].data.push(avgIterative);
             timeChart.data.datasets[1].data.push(avgRecursive);
             timeChart.update();
             
-            // Update hasil sementara
             updateResults(avgIterative, avgRecursive);
             
-            // Beri jeda agar UI tetap responsif
             await new Promise(resolve => setTimeout(resolve, 50));
         }
         
-        // Hitung rata-rata keseluruhan
         const validIterativeTimes = iterativeTimes.filter(time => time > 0);
         const validRecursiveTimes = recursiveTimes.filter(time => time > 0);
         
@@ -329,7 +378,6 @@ async function runTest() {
             ? validRecursiveTimes.reduce((a, b) => a + b, 0) / validRecursiveTimes.length
             : 0;
         
-        // Update hasil akhir
         updateResults(overallIterative, overallRecursive);
         currentDataPoints = dataSizes;
         updateChartInfo();
@@ -347,7 +395,10 @@ async function runTest() {
         runBtn.innerHTML = '<i class="fas fa-play"></i> JALANKAN TES';
     }
 }
-// Tambahkan di script.js (setelah semua fungsi yang ada)
+
+// ============================================
+// FUNGSI UNTUK INPUT DATA
+// ============================================
 
 // Event listener untuk upload CSV
 document.getElementById('csvUpload').addEventListener('change', function(e) {
@@ -357,11 +408,11 @@ document.getElementById('csvUpload').addEventListener('change', function(e) {
         processBtn.innerHTML = '<i class="fas fa-cog"></i> Proses (' + e.target.files[0].name + ')';
     } else {
         processBtn.disabled = true;
-        processBtn.innerHTML = '<i class="fas fa-cog"></i> Proses';
+        processBtn.innerHTML = '<i class="fas fa-cog"></i> Proses CSV';
     }
 });
 
-// Fungsi untuk menguji satu kartu
+// Fungsi untuk menguji satu kartu (PERBAIKAN)
 function testSingleCard() {
     const cardNumber = document.getElementById('singleCardInput').value.trim();
     
@@ -378,8 +429,8 @@ function testSingleCard() {
         return;
     }
     
-    // Jalankan pengujian
-    const iterations = 1000;
+    // Jalankan pengujian dengan iterasi yang wajar
+    const iterations = 10000; // Diperkecil agar lebih realistis
     
     // Waktu untuk iteratif
     const iterativeStart = performance.now();
@@ -388,7 +439,7 @@ function testSingleCard() {
         iterativeValid = luhnIterative(cleanCardNumber);
     }
     const iterativeEnd = performance.now();
-    const iterativeTime = (iterativeEnd - iterativeStart);
+    const iterativeTime = (iterativeEnd - iterativeStart) / iterations; // Waktu per eksekusi
     
     // Waktu untuk rekursif
     const recursiveStart = performance.now();
@@ -397,22 +448,22 @@ function testSingleCard() {
         recursiveValid = luhnRecursive(cleanCardNumber);
     }
     const recursiveEnd = performance.now();
-    const recursiveTime = (recursiveEnd - recursiveStart);
+    const recursiveTime = (recursiveEnd - recursiveStart) / iterations; // Waktu per eksekusi
     
     // Tampilkan hasil
     displaySingleTestResult(cleanCardNumber, iterativeValid, recursiveValid, iterativeTime, recursiveTime);
     
-    // Tambahkan ke grafik
-    addToChart(cleanCardNumber.length, iterativeTime, recursiveTime);
+    // Tambahkan ke grafik sebagai titik terpisah
+    addSingleCardToChart(cleanCardNumber.length, iterativeTime, recursiveTime);
 }
 
-// Fungsi untuk menampilkan hasil tes single
+// Fungsi untuk menampilkan hasil tes single (PERBAIKAN)
 function displaySingleTestResult(cardNumber, iterativeValid, recursiveValid, iterativeTime, recursiveTime) {
     const resultDiv = document.getElementById('singleTestResult');
     const validityStatus = document.getElementById('validityStatus');
     
-    document.getElementById('singleIterativeTime').textContent = iterativeTime.toFixed(2) + ' ms';
-    document.getElementById('singleRecursiveTime').textContent = recursiveTime.toFixed(2) + ' ms';
+    document.getElementById('singleIterativeTime').textContent = iterativeTime.toFixed(6) + ' ms';
+    document.getElementById('singleRecursiveTime').textContent = recursiveTime.toFixed(6) + ' ms';
     
     // Periksa konsistensi hasil
     if (iterativeValid && recursiveValid) {
@@ -429,7 +480,7 @@ function displaySingleTestResult(cardNumber, iterativeValid, recursiveValid, ite
     resultDiv.style.display = 'block';
 }
 
-// Fungsi untuk memproses CSV
+// Fungsi untuk memproses CSV (PERBAIKAN)
 function processCSV() {
     const fileInput = document.getElementById('csvUpload');
     if (!fileInput.files.length) return;
@@ -441,15 +492,37 @@ function processCSV() {
         const content = e.target.result;
         const lines = content.split('\n');
         
+        let totalCards = 0;
         let validCount = 0;
-        let invalidCount = 0;
         const cardNumbers = [];
         
-        // Parse data
-        for (let line of lines) {
-            const cardNumber = line.trim().replace(/\D/g, '');
+        // Parse data dari CSV
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            
+            // Coba parse sebagai CSV dengan kolom card_number
+            let cardNumber = '';
+            
+            if (line.includes(',')) {
+                // Format CSV dengan koma
+                const parts = line.split(',');
+                // Cari bagian yang berisi angka (bisa jadi card_number)
+                for (let part of parts) {
+                    const cleaned = part.trim().replace(/\D/g, '');
+                    if (cleaned.length >= 13 && cleaned.length <= 19) {
+                        cardNumber = cleaned;
+                        break;
+                    }
+                }
+            } else {
+                // Format satu kolom saja
+                cardNumber = line.replace(/\D/g, '');
+            }
+            
             if (cardNumber.length >= 13 && cardNumber.length <= 19) {
                 cardNumbers.push(cardNumber);
+                totalCards++;
             }
         }
         
@@ -459,15 +532,17 @@ function processCSV() {
         }
         
         // Jalankan pengujian dengan algoritma iteratif
+        const iterations = 1000;
         const iterativeStart = performance.now();
         let iterativeValidCount = 0;
+        
         for (let cardNumber of cardNumbers) {
             if (luhnIterative(cardNumber)) {
                 iterativeValidCount++;
             }
         }
         const iterativeEnd = performance.now();
-        const iterativeTime = (iterativeEnd - iterativeStart);
+        const iterativeTime = (iterativeEnd - iterativeStart) / cardNumbers.length; // Rata-rata per kartu
         
         // Jalankan pengujian dengan algoritma rekursif
         const recursiveStart = performance.now();
@@ -478,60 +553,115 @@ function processCSV() {
             }
         }
         const recursiveEnd = performance.now();
-        const recursiveTime = (recursiveEnd - recursiveStart);
+        const recursiveTime = (recursiveEnd - recursiveStart) / cardNumbers.length; // Rata-rata per kartu
         
         // Tampilkan hasil
         displayCSVResult(cardNumbers.length, iterativeValidCount, recursiveValidCount, iterativeTime, recursiveTime);
         
-        // Tambahkan ke grafik (rata-rata waktu per kartu)
-        const avgIterativeTime = iterativeTime / cardNumbers.length;
-        const avgRecursiveTime = recursiveTime / cardNumbers.length;
-        addToChart(cardNumbers[0].length, avgIterativeTime, avgRecursiveTime);
+        // Tambahkan ke grafik
+        if (cardNumbers.length > 0) {
+            const sampleLength = cardNumbers[0].length; // Ambil panjang kartu pertama sebagai representasi
+            addCsvToChart(sampleLength, iterativeTime, recursiveTime);
+        }
     };
     
     reader.readAsText(file);
 }
 
-// Fungsi untuk menampilkan hasil CSV
+// Fungsi untuk menampilkan hasil CSV (PERBAIKAN)
 function displayCSVResult(total, iterativeValid, recursiveValid, iterativeTime, recursiveTime) {
     const resultDiv = document.getElementById('csvResult');
     
     document.getElementById('totalCards').textContent = total;
     document.getElementById('validCards').textContent = iterativeValid;
     document.getElementById('invalidCards').textContent = total - iterativeValid;
-    document.getElementById('csvIterativeTime').textContent = iterativeTime.toFixed(2) + ' ms';
-    document.getElementById('csvRecursiveTime').textContent = recursiveTime.toFixed(2) + ' ms';
+    document.getElementById('csvIterativeTime').textContent = iterativeTime.toFixed(6) + ' ms/kartu';
+    document.getElementById('csvRecursiveTime').textContent = recursiveTime.toFixed(6) + ' ms/kartu';
     
     resultDiv.style.display = 'block';
 }
 
-// Fungsi untuk menambahkan titik ke grafik utama
-function addToChart(dataLength, iterativeTime, recursiveTime) {
-    // Cek apakah panjang data sudah ada di chart
-    const existingIndex = timeChart.data.labels.indexOf(dataLength.toString());
+// ============================================
+// FUNGSI UNTUK MENAMBAHKAN DATA KE GRAFIK
+// ============================================
+
+// Fungsi untuk menambahkan single card ke grafik
+function addSingleCardToChart(dataLength, iterativeTime, recursiveTime) {
+    // Tambahkan label jika belum ada
+    const label = `S-${dataLength}`;
+    const existingIndex = timeChart.data.labels.indexOf(label);
     
-    if (existingIndex >= 0) {
-        // Update nilai yang sudah ada (rata-rata)
-        const oldIterative = timeChart.data.datasets[0].data[existingIndex];
-        const oldRecursive = timeChart.data.datasets[1].data[existingIndex];
-        timeChart.data.datasets[0].data[existingIndex] = (oldIterative + iterativeTime) / 2;
-        timeChart.data.datasets[1].data[existingIndex] = (oldRecursive + recursiveTime) / 2;
-    } else {
-        // Tambahkan titik baru
-        timeChart.data.labels.push(dataLength.toString());
-        timeChart.data.datasets[0].data.push(iterativeTime);
-        timeChart.data.datasets[1].data.push(recursiveTime);
+    if (existingIndex === -1) {
+        timeChart.data.labels.push(label);
         
-        // Update jumlah data points
-        currentDataPoints.push(dataLength);
-        updateChartInfo();
+        // Reset semua dataset untuk panjang label baru
+        timeChart.data.datasets.forEach((dataset, index) => {
+            // Isi dengan null untuk semua dataset kecuali yang sesuai
+            if (index === 2 || index === 3) { // Dataset untuk single card
+                dataset.data.push(index === 2 ? iterativeTime : recursiveTime);
+            } else {
+                dataset.data.push(null);
+            }
+        });
+    } else {
+        // Update data yang sudah ada
+        timeChart.data.datasets[2].data[existingIndex] = iterativeTime;
+        timeChart.data.datasets[3].data[existingIndex] = recursiveTime;
     }
+    
+    // Update skala chart
+    updateChartScale();
     
     // Update chart
     timeChart.update();
     
-    // Update hasil keseluruhan
-    updateResults(iterativeTime, recursiveTime);
+    singleCardTested = true;
+}
+
+// Fungsi untuk menambahkan data CSV ke grafik
+function addCsvToChart(dataLength, iterativeTime, recursiveTime) {
+    // Tambahkan label jika belum ada
+    const label = `C-${dataLength}`;
+    const existingIndex = timeChart.data.labels.indexOf(label);
+    
+    if (existingIndex === -1) {
+        timeChart.data.labels.push(label);
+        
+        // Reset semua dataset untuk panjang label baru
+        timeChart.data.datasets.forEach((dataset, index) => {
+            // Isi dengan null untuk semua dataset kecuali yang sesuai
+            if (index === 4 || index === 5) { // Dataset untuk CSV
+                dataset.data.push(index === 4 ? iterativeTime : recursiveTime);
+            } else {
+                dataset.data.push(null);
+            }
+        });
+    } else {
+        // Update data yang sudah ada
+        timeChart.data.datasets[4].data[existingIndex] = iterativeTime;
+        timeChart.data.datasets[5].data[existingIndex] = recursiveTime;
+    }
+    
+    // Update skala chart
+    updateChartScale();
+    
+    // Update chart
+    timeChart.update();
+    
+    csvDataProcessed = true;
+}
+
+// Fungsi untuk mengupdate skala chart
+function updateChartScale() {
+    const allTimes = [];
+    timeChart.data.datasets.forEach(dataset => {
+        allTimes.push(...dataset.data.filter(time => time !== null));
+    });
+    
+    if (allTimes.length > 0) {
+        const maxTime = Math.max(...allTimes);
+        timeChart.options.scales.y.suggestedMax = maxTime * 1.5;
+    }
 }
 
 function showAlgorithm(type) {
@@ -555,10 +685,12 @@ function copyCurrentAlgorithm() {
         copyBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
         setTimeout(() => {
             copyBtn.innerHTML = originalText;
+            copyBtn.style.background = '';
         }, 2000);
     });
 }
 
+// Event listener untuk DOM
 document.addEventListener('DOMContentLoaded', function() {
     initChart();
     updateChartInfo();
@@ -569,7 +701,6 @@ document.addEventListener('DOMContentLoaded', function() {
         stepValue.textContent = this.value;
     });
     
-    // Event listener untuk minData (diubah agar bisa 0)
     document.getElementById('minData').addEventListener('change', function() {
         let min = parseInt(this.value);
         const max = parseInt(document.getElementById('maxData').value);
@@ -585,7 +716,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Event listener untuk maxData
     document.getElementById('maxData').addEventListener('change', function() {
         let max = parseInt(this.value);
         const min = parseInt(document.getElementById('minData').value);
@@ -602,15 +732,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Event listener untuk tombol reset
     document.querySelector('.reset-btn').addEventListener('click', function() {
         resetAll();
     });
     
-    // Event listener untuk tombol clear
     document.querySelector('.clear-btn').addEventListener('click', function() {
         clearChart();
     });
 });
-
-
