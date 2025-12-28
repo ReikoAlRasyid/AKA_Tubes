@@ -569,18 +569,48 @@ function processCSV() {
 }
 
 // Fungsi untuk menampilkan hasil CSV (PERBAIKAN)
-function displayCSVResult(total, iterativeValid, recursiveValid, iterativeTime, recursiveTime) {
+function displayCSVResults(results) {
     const resultDiv = document.getElementById('csvResult');
     
-    document.getElementById('totalCards').textContent = total;
-    document.getElementById('validCards').textContent = iterativeValid;
-    document.getElementById('invalidCards').textContent = total - iterativeValid;
-    document.getElementById('csvIterativeTime').textContent = iterativeTime.toFixed(6) + ' ms/kartu';
-    document.getElementById('csvRecursiveTime').textContent = recursiveTime.toFixed(6) + ' ms/kartu';
+    if (!resultDiv) {
+        console.error('Element csvResult tidak ditemukan!');
+        return;
+    }
     
-    resultDiv.style.display = 'block';
+    try {
+        const fileNameSpan = document.getElementById('csvFileName');
+        const totalCardsSpan = document.getElementById('totalCards');
+        const validCardsSpan = document.getElementById('validCards');
+        const invalidCardsSpan = document.getElementById('invalidCards');
+        const iterativeTimeSpan = document.getElementById('csvIterativeTime');
+        const recursiveTimeSpan = document.getElementById('csvRecursiveTime');
+        
+        // Validasi semua element
+        if (!fileNameSpan || !totalCardsSpan || !validCardsSpan || !invalidCardsSpan || !iterativeTimeSpan || !recursiveTimeSpan) {
+            console.error('Satu atau lebih element hasil CSV tidak ditemukan!');
+            return;
+        }
+        
+        // Update data utama
+        fileNameSpan.textContent = currentCsvFileName || 'Unknown File';
+        totalCardsSpan.textContent = results.totalCards || 0;
+        validCardsSpan.textContent = results.iterative?.validCount || 0;
+        invalidCardsSpan.textContent = (results.totalCards || 0) - (results.iterative?.validCount || 0);
+        
+        // Format waktu
+        const iterativeAvg = results.iterative?.avgTime || (results.iterative?.totalTime / (results.totalCards || 1));
+        const recursiveAvg = results.recursive?.avgTime || (results.recursive?.totalTime / (results.totalCards || 1));
+        
+        iterativeTimeSpan.textContent = `${(results.iterative?.totalTime || 0).toFixed(2)} ms (${iterativeAvg.toFixed(4)} ms/kartu)`;
+        recursiveTimeSpan.textContent = `${(results.recursive?.totalTime || 0).toFixed(2)} ms (${recursiveAvg.toFixed(4)} ms/kartu)`;
+        
+        // ... sisa kode untuk menampilkan sample ...
+        
+    } catch (error) {
+        console.error('Error displaying CSV results:', error);
+        alert('Terjadi kesalahan saat menampilkan hasil CSV');
+    }
 }
-
 // ============================================
 // FUNGSI UNTUK MENAMBAHKAN DATA KE GRAFIK
 // ============================================
@@ -618,52 +648,140 @@ function addSingleCardToChart(dataLength, iterativeTime, recursiveTime) {
     singleCardTested = true;
 }
 
-// Fungsi untuk menambahkan data CSV ke grafik
-function addCsvToChart(dataLength, iterativeTime, recursiveTime) {
-    // Tambahkan label jika belum ada
-    const label = `C-${dataLength}`;
-    const existingIndex = timeChart.data.labels.indexOf(label);
+
+function addCsvToGraph(results) {
+    // Pastikan timeChart sudah diinisialisasi
+    if (!timeChart || !timeChart.data || !timeChart.data.datasets) {
+        console.error('Chart belum diinisialisasi!');
+        return;
+    }
+    
+    if (results.totalCards === 0 || !results.iterative || !results.recursive) {
+        console.error('Data results tidak valid!');
+        return;
+    }
+    
+    // Hitung panjang kartu rata-rata untuk posisi di grafik
+    let avgLength = 0;
+    let totalLength = 0;
+    
+    if (!csvCardNumbers || csvCardNumbers.length === 0) {
+        console.error('Data kartu CSV kosong!');
+        return;
+    }
+    
+    csvCardNumbers.forEach(card => {
+        totalLength += card.length;
+    });
+    
+    avgLength = Math.round(totalLength / csvCardNumbers.length);
+    
+    // Pastikan datasets ada dan cukup panjang
+    const datasets = timeChart.data.datasets;
+    if (datasets.length < 6) {
+        console.error('Dataset chart tidak lengkap!');
+        return;
+    }
+    
+    // Dataset 4: Iteratif (CSV)
+    // Dataset 5: Rekursif (CSV)
+    
+    // Inisialisasi arrays jika belum ada
+    if (!timeChart.data.labels) timeChart.data.labels = [];
+    datasets.forEach(dataset => {
+        if (!dataset.data) dataset.data = [];
+    });
+    
+    // Cari apakah sudah ada data untuk panjang ini
+    const label = `CSV-${avgLength}`;
+    let existingIndex = -1;
+    
+    if (timeChart.data.labels && Array.isArray(timeChart.data.labels)) {
+        existingIndex = timeChart.data.labels.indexOf(label);
+    }
     
     if (existingIndex === -1) {
+        // Tambahkan label baru
         timeChart.data.labels.push(label);
         
-        // Reset semua dataset untuk panjang label baru
-        timeChart.data.datasets.forEach((dataset, index) => {
-            // Isi dengan null untuk semua dataset kecuali yang sesuai
-            if (index === 4 || index === 5) { // Dataset untuk CSV
-                dataset.data.push(index === 4 ? iterativeTime : recursiveTime);
+        console.log('Menambahkan label baru:', label, 'ke chart');
+        
+        // Tambahkan data ke semua dataset
+        datasets.forEach((dataset, index) => {
+            if (!dataset.data) dataset.data = [];
+            
+            if (index === 4) { // Iteratif CSV
+                dataset.data.push(results.iterative.avgTime || results.iterative.totalTime / csvCardNumbers.length);
+                console.log('Dataset 4 (Iteratif CSV):', dataset.data);
+            } else if (index === 5) { // Rekursif CSV
+                dataset.data.push(results.recursive.avgTime || results.recursive.totalTime / csvCardNumbers.length);
+                console.log('Dataset 5 (Rekursif CSV):', dataset.data);
             } else {
+                // Untuk dataset lain, tambahkan null untuk menjaga alignment
                 dataset.data.push(null);
             }
         });
     } else {
         // Update data yang sudah ada
-        timeChart.data.datasets[4].data[existingIndex] = iterativeTime;
-        timeChart.data.datasets[5].data[existingIndex] = recursiveTime;
+        console.log('Update data existing di index:', existingIndex);
+        
+        if (datasets[4] && datasets[4].data) {
+            datasets[4].data[existingIndex] = results.iterative.avgTime || results.iterative.totalTime / csvCardNumbers.length;
+        }
+        
+        if (datasets[5] && datasets[5].data) {
+            datasets[5].data[existingIndex] = results.recursive.avgTime || results.recursive.totalTime / csvCardNumbers.length;
+        }
     }
-    
-    // Update skala chart
+
     updateChartScale();
     
-    // Update chart
-    timeChart.update();
+    // Update grafik
+    try {
+        timeChart.update('none'); // 'none' untuk update tanpa animasi
+        console.log('Chart berhasil diupdate dengan data CSV');
+    } catch (error) {
+        console.error('Error updating chart:', error);
+    }
     
-    csvDataProcessed = true;
+    console.log('CSV data berhasil ditambahkan ke graph:', {
+        avgLength,
+        iterativeTime: results.iterative.avgTime,
+        recursiveTime: results.recursive.avgTime,
+        totalCards: results.totalCards
+    });
 }
 
-// Fungsi untuk mengupdate skala chart
+// Fungsi untuk mengupdate skala grafik (DIPERBAIKI)
 function updateChartScale() {
+    if (!timeChart || !timeChart.data || !timeChart.data.datasets) {
+        console.error('Chart tidak tersedia untuk update scale');
+        return;
+    }
+    
     const allTimes = [];
     timeChart.data.datasets.forEach(dataset => {
-        allTimes.push(...dataset.data.filter(time => time !== null));
+        if (dataset && dataset.data && Array.isArray(dataset.data)) {
+            dataset.data.forEach(time => {
+                if (time !== null && time !== undefined && typeof time === 'number') {
+                    allTimes.push(time);
+                }
+            });
+        }
     });
     
     if (allTimes.length > 0) {
         const maxTime = Math.max(...allTimes);
-        timeChart.options.scales.y.suggestedMax = maxTime * 1.5;
+        if (maxTime > 0) {
+            // Pastikan options.scales.y ada
+            if (!timeChart.options.scales) timeChart.options.scales = {};
+            if (!timeChart.options.scales.y) timeChart.options.scales.y = {};
+            
+            timeChart.options.scales.y.suggestedMax = maxTime * 1.3;
+            console.log('Updated chart scale, suggestedMax:', timeChart.options.scales.y.suggestedMax);
+        }
     }
 }
-
 function showAlgorithm(type) {
     document.querySelectorAll('.algo-tab').forEach(tab => {
         tab.classList.remove('active');
@@ -740,3 +858,4 @@ document.addEventListener('DOMContentLoaded', function() {
         clearChart();
     });
 });
+
