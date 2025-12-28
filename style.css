@@ -112,6 +112,163 @@ body {
     display: flex;
     gap: 10px;
 }
+/* Tambahkan di style.css */
+.data-input-section {
+    background: rgba(30, 41, 59, 0.9);
+    padding: 20px;
+    border-radius: 15px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.data-input-section h2 {
+    color: #3b82f6;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.3rem;
+}
+
+.test-btn {
+    width: 100%;
+    padding: 10px;
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.test-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
+}
+
+.upload-btn, .process-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.upload-btn {
+    background: rgba(15, 23, 42, 0.8);
+    border: 2px solid rgba(148, 163, 184, 0.3);
+    color: #f8fafc;
+}
+
+.upload-btn:hover {
+    background: #3b82f6;
+    border-color: #3b82f6;
+    transform: translateY(-2px);
+}
+
+.process-btn {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.process-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+}
+
+.process-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.test-result, .csv-result {
+    background: rgba(15, 23, 42, 0.9);
+    padding: 15px;
+    border-radius: 10px;
+    margin-top: 15px;
+    border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.test-result h4, .csv-result h4 {
+    color: #f59e0b;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1rem;
+}
+
+.result-details {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.result-detail {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.result-detail .label {
+    color: #94a3b8;
+    font-size: 0.8rem;
+    margin-bottom: 5px;
+}
+
+.result-detail .value {
+    color: #f1f5f9;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.csv-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+}
+
+.stat-label {
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+.stat-value {
+    color: #f1f5f9;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.stat-value.valid {
+    color: #10b981;
+}
+
+.stat-value.invalid {
+    color: #ef4444;
+}
 
 .chart-btn {
     width: 40px;
@@ -676,4 +833,5 @@ body {
     .header p {
         font-size: 0.9rem;
     }
+
 }
