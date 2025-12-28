@@ -99,7 +99,7 @@ function initChart() {
                 x: {
                     title: {
                         display: true,
-                        text: 'Panjang Data',
+                        text: 'Jumlah Data',
                         color: '#94a3b8'
                     },
                     grid: {
@@ -158,7 +158,7 @@ function clearChart() {
     timeChart.data.datasets[0].data = [];
     timeChart.data.datasets[1].data = [];
     
-    timeChart.options.scales.x.title.text = 'Panjang Data';
+    timeChart.options.scales.x.title.text = 'Jumlah Data';
     timeChart.options.plugins.title = { display: false };
     timeChart.options.scales.y.min = 0;
     timeChart.options.scales.y.suggestedMax = 10;
@@ -188,6 +188,10 @@ function resetAll() {
     document.getElementById('singleTestResult').style.display = 'none';
     document.getElementById('csvResult').style.display = 'none';
     
+    // Reset avg digit display
+    const avgDigitItem = document.getElementById('avgDigitItem');
+    if (avgDigitItem) avgDigitItem.style.display = 'none';
+    
     setIterations(5);
     document.getElementById('chartStatus').textContent = 'Siap';
     document.getElementById('chartStatus').style.color = '';
@@ -200,17 +204,21 @@ function updateResults(iterativeTime, recursiveTime) {
     const recursivePercent = document.getElementById('recursivePercent');
     const speedupElem = document.getElementById('speedupFactor');
     const speedupDesc = document.querySelector('.result-desc');
+    
     iterativeElem.textContent = iterativeTime.toFixed(2) + ' ms';
     recursiveElem.textContent = recursiveTime.toFixed(2) + ' ms';
+    
     const totalTime = iterativeTime + recursiveTime;
     if (totalTime > 0) {
         const iterativePercentage = ((iterativeTime / totalTime) * 100).toFixed(1);
         const recursivePercentage = ((recursiveTime / totalTime) * 100).toFixed(1);
         iterativePercent.textContent = iterativePercentage + '%';
         recursivePercent.textContent = recursivePercentage + '%';
+        
         if (iterativeTime > 0 && recursiveTime > 0) {
             const speedup = recursiveTime / iterativeTime;
             speedupElem.textContent = speedup.toFixed(2) + 'x';
+            
             if (speedup > 1) {
                 speedupDesc.textContent = 'Iteratif lebih cepat';
             } else if (speedup < 1) {
@@ -235,9 +243,9 @@ async function runTest() {
     statusElem.style.color = '#f59e0b';
     
     try {
-        let minData = parseInt(document.getElementById('minData').value);
-        let maxData = parseInt(document.getElementById('maxData').value);
-        const steps = parseInt(document.getElementById('dataSteps').value);
+        let minData = parseInt(document.getElementById('minData').value) || 0;
+        let maxData = parseInt(document.getElementById('maxData').value) || 1000;
+        const steps = parseInt(document.getElementById('dataSteps').value) || 10;
         
         if (minData < 0) minData = 0;
         if (maxData < minData) maxData = minData + 10;
@@ -247,10 +255,10 @@ async function runTest() {
         timeChart.data.datasets[0].data = [];
         timeChart.data.datasets[1].data = [];
         
-        timeChart.options.scales.x.title.text = 'Panjang Data (digit)';
+        timeChart.options.scales.x.title.text = 'Jumlah Data';
         timeChart.options.plugins.title = { 
             display: true,
-            text: 'Random Test: Waktu vs Panjang Data',
+            text: 'Random Test: Waktu vs Jumlah Data',
             color: '#f1f5f9',
             font: {
                 size: 14,
@@ -260,27 +268,24 @@ async function runTest() {
         
         const iterativeTimes = [];
         const recursiveTimes = [];
-        
         const dataSizes = [];
         
         if (steps <= 1) {
             dataSizes.push(maxData);
         } else {
             const interval = (maxData - minData) / (steps - 1);
-            
             for (let i = 0; i < steps; i++) {
                 const size = Math.round(minData + (i * interval));
                 dataSizes.push(size);
             }
-            
             dataSizes[dataSizes.length - 1] = maxData;
         }
         
         for (let idx = 0; idx < dataSizes.length; idx++) {
-            const size = dataSizes[idx];
-            statusElem.textContent = `Menguji titik ${idx + 1}/${dataSizes.length} (panjang ${size} digit)...`;
+            const dataCount = dataSizes[idx]; // JUMLAH DATA
+            statusElem.textContent = `Menguji titik ${idx + 1}/${dataSizes.length} (${dataCount} data)...`;
             
-            if (size === 0) {
+            if (dataCount === 0) {
                 timeChart.data.labels.push('0');
                 timeChart.data.datasets[0].data.push(0);
                 timeChart.data.datasets[1].data.push(0);
@@ -293,18 +298,30 @@ async function runTest() {
             let recursiveTotal = 0;
             
             for (let iter = 0; iter < currentIterations; iter++) {
-                const cardNumber = generateRandomCardNumber(size);
+                // Buat array dengan 'dataCount' nomor kartu
+                const cardNumbers = [];
+                for (let i = 0; i < dataCount; i++) {
+                    // Generate nomor kartu dengan panjang acak 13-19 digit
+                    const length = Math.floor(Math.random() * 7) + 13;
+                    cardNumbers.push(generateRandomCardNumber(length));
+                }
                 
+                // Test Iteratif - hitung semua dataCount kartu
                 const iterativeStart = performance.now();
                 for (let i = 0; i < 1000; i++) {
-                    luhnIterative(cardNumber);
+                    for (let cardNumber of cardNumbers) {
+                        luhnIterative(cardNumber);
+                    }
                 }
                 const iterativeEnd = performance.now();
                 iterativeTotal += (iterativeEnd - iterativeStart);
                 
+                // Test Rekursif - hitung semua dataCount kartu
                 const recursiveStart = performance.now();
                 for (let i = 0; i < 1000; i++) {
-                    luhnRecursive(cardNumber);
+                    for (let cardNumber of cardNumbers) {
+                        luhnRecursive(cardNumber);
+                    }
                 }
                 const recursiveEnd = performance.now();
                 recursiveTotal += (recursiveEnd - recursiveStart);
@@ -315,7 +332,7 @@ async function runTest() {
             iterativeTimes.push(avgIterative);
             recursiveTimes.push(avgRecursive);
             
-            timeChart.data.labels.push(`${size}`);
+            timeChart.data.labels.push(`${dataCount}`);
             timeChart.data.datasets[0].data.push(avgIterative);
             timeChart.data.datasets[1].data.push(avgRecursive);
             timeChart.update();
@@ -370,6 +387,7 @@ function testSingleCard() {
         return;
     }
     
+    // Sama seperti random test: hitung 1 data
     const iterations = 1000;
     
     const iterativeStart = performance.now();
@@ -390,10 +408,11 @@ function testSingleCard() {
     
     displaySingleTestResult(cleanCardNumber, iterativeValid, recursiveValid, iterativeTime, recursiveTime);
     
-    addToMainChartAsTest(iterativeTime, recursiveTime);
+    // Single card = 1 data point
+    addToMainChartAsTest(1, iterativeTime, recursiveTime);
 }
 
-function addToMainChartAsTest(iterativeTime, recursiveTime) {
+function addToMainChartAsTest(dataCount, iterativeTime, recursiveTime) {
     const testNumber = singleCardTestCount + 1;
     singleCardTestCount = testNumber;
     
@@ -409,7 +428,7 @@ function addToMainChartAsTest(iterativeTime, recursiveTime) {
     timeChart.options.scales.x.title.text = 'Nomor Tes';
     timeChart.options.plugins.title = {
         display: true,
-        text: 'Single Card Test',
+        text: 'Single Card Test (1 data point)',
         color: '#f1f5f9',
         font: {
             size: 16,
@@ -432,6 +451,7 @@ function addToMainChartAsTest(iterativeTime, recursiveTime) {
     currentDataPoints.push({
         type: 'singleTest',
         testNumber: testNumber,
+        dataCount: dataCount,
         iterativeTime: iterativeTime,
         recursiveTime: recursiveTime
     });
@@ -488,34 +508,20 @@ function processCSV() {
             return;
         }
         
-        // Tampilkan dialog pilihan mode
-        const mode = confirm(
-            `File CSV berisi ${allCards.length} nomor kartu.\n\n` +
-            `Pilih mode pengujian:\n\n` +
-            `OK = Incremental Test (seperti Random Test)\n` +
-            `Cancel = Single Point Test`
-        );
-        
-        if (mode) {
-            // MODE 1: INCREMENTAL TEST (seperti Random Test)
-            processCSVIncremental(allCards);
-        } else {
-            // MODE 2: SINGLE POINT TEST (seperti sebelumnya)
-            processCSVSinglePoint(allCards);
-        }
+        // Langsung jalankan incremental test (konsisten dengan random test)
+        processCSVIncremental(allCards);
     };
     
     reader.readAsText(file);
 }
 
-// MODE 1: INCREMENTAL TEST - Grafik waktu vs jumlah data
 function processCSVIncremental(allCards) {
     // Reset chart
     clearChart();
     timeChart.options.scales.x.title.text = 'Jumlah Data';
     timeChart.options.plugins.title = {
         display: true,
-        text: `CSV Test: Waktu vs Jumlah Data (Total: ${allCards.length} kartu)`,
+        text: `CSV Test: Waktu vs Jumlah Data (Total: ${allCards.length} data)`,
         color: '#f1f5f9',
         font: {
             size: 14,
@@ -523,12 +529,12 @@ function processCSVIncremental(allCards) {
         }
     };
     
-    // Buat 10 titik data incremental (10%, 20%, ..., 100%)
+    // Buat titik data incremental (sama seperti random test)
     const totalDataPoints = 10;
     const stepSize = Math.floor(allCards.length / totalDataPoints);
     
     const statusElem = document.getElementById('chartStatus');
-    statusElem.textContent = 'Memproses CSV (Incremental Test)...';
+    statusElem.textContent = 'Memproses CSV...';
     statusElem.style.color = '#f59e0b';
     
     // Untuk setiap titik data
@@ -539,33 +545,36 @@ function processCSVIncremental(allCards) {
         // Update status
         statusElem.textContent = `Memproses ${point}/${totalDataPoints} (${dataCount} data)...`;
         
-        // Test dengan 10 iterasi untuk konsistensi
-        const testIterations = 10;
+        // Test dengan iterasi yang SAMA seperti Random Test
+        const testIterations = currentIterations; // Pakai currentIterations dari user!
         
         let iterativeTotal = 0;
         let recursiveTotal = 0;
         
-        // Jalankan beberapa iterasi untuk hasil yang lebih stabil
+        // TEST ITERATIF
         for (let iter = 0; iter < testIterations; iter++) {
-            // Test Iteratif
             const iterativeStart = performance.now();
-            for (let card of testCards) {
-                luhnIterative(card.number);
+            for (let i = 0; i < 1000; i++) { // SAMA PERSIS dengan random test!
+                for (let card of testCards) {
+                    luhnIterative(card.number);
+                }
             }
             const iterativeEnd = performance.now();
             iterativeTotal += (iterativeEnd - iterativeStart);
-            
-            // Test Rekursif
+        }
+        const avgIterative = iterativeTotal / testIterations;
+        
+        // TEST REKURSIF
+        for (let iter = 0; iter < testIterations; iter++) {
             const recursiveStart = performance.now();
-            for (let card of testCards) {
-                luhnRecursive(card.number);
+            for (let i = 0; i < 1000; i++) { // SAMA PERSIS dengan random test!
+                for (let card of testCards) {
+                    luhnRecursive(card.number);
+                }
             }
             const recursiveEnd = performance.now();
             recursiveTotal += (recursiveEnd - recursiveStart);
         }
-        
-        // Hitung rata-rata waktu
-        const avgIterative = iterativeTotal / testIterations;
         const avgRecursive = recursiveTotal / testIterations;
         
         // Tambahkan ke chart
@@ -573,7 +582,7 @@ function processCSVIncremental(allCards) {
         timeChart.data.datasets[0].data.push(avgIterative);
         timeChart.data.datasets[1].data.push(avgRecursive);
         
-        // Update chart secara bertahap
+        // Update chart
         timeChart.update();
         
         // Update hasil sementara
@@ -585,6 +594,7 @@ function processCSVIncremental(allCards) {
     let totalValidRecursive = 0;
     let totalLength = 0;
     
+    // Hitung validitas
     for (let card of allCards) {
         if (luhnIterative(card.number)) totalValidIterative++;
         if (luhnRecursive(card.number)) totalValidRecursive++;
@@ -604,7 +614,7 @@ function processCSVIncremental(allCards) {
     );
     
     // Update status akhir
-    statusElem.textContent = `CSV Test Selesai (${allCards.length} kartu)`;
+    statusElem.textContent = `CSV Test Selesai (${allCards.length} data)`;
     statusElem.style.color = '#10b981';
     
     // Simpan data points
@@ -622,117 +632,6 @@ function processCSVIncremental(allCards) {
     updateChartInfo();
 }
 
-// MODE 2: SINGLE POINT TEST - Satu titik untuk semua data
-function processCSVSinglePoint(allCards) {
-    // Reset chart jika sebelumnya ada data incremental
-    if (currentDataPoints.length > 0 && currentDataPoints[0].type === 'csvIncremental') {
-        clearChart();
-    }
-    
-    const csvTestCount = currentDataPoints.filter(p => p.type === 'csvSingle').length + 1;
-    
-    // Test semua data sekaligus
-    const testIterations = 10;
-    
-    let iterativeTotal = 0;
-    let recursiveTotal = 0;
-    let totalValidIterative = 0;
-    let totalValidRecursive = 0;
-    let totalLength = 0;
-    
-    const statusElem = document.getElementById('chartStatus');
-    statusElem.textContent = 'Memproses CSV (Single Test)...';
-    statusElem.style.color = '#f59e0b';
-    
-    // Jalankan beberapa iterasi
-    for (let iter = 0; iter < testIterations; iter++) {
-        // Test Iteratif
-        const iterativeStart = performance.now();
-        for (let card of allCards) {
-            if (luhnIterative(card.number)) {
-                if (iter === 0) totalValidIterative++;
-            }
-        }
-        const iterativeEnd = performance.now();
-        iterativeTotal += (iterativeEnd - iterativeStart);
-        
-        // Test Rekursif
-        const recursiveStart = performance.now();
-        for (let card of allCards) {
-            if (luhnRecursive(card.number)) {
-                if (iter === 0) totalValidRecursive++;
-            }
-        }
-        const recursiveEnd = performance.now();
-        recursiveTotal += (recursiveEnd - recursiveStart);
-        
-        // Hitung panjang total (hanya sekali)
-        if (iter === 0) {
-            for (let card of allCards) {
-                totalLength += card.length;
-            }
-        }
-    }
-    
-    // Hitung rata-rata waktu
-    const avgIterative = iterativeTotal / testIterations;
-    const avgRecursive = recursiveTotal / testIterations;
-    const avgLength = Math.round(totalLength / allCards.length);
-    
-    // Update chart
-    timeChart.data.labels.push(`CSV ${csvTestCount}`);
-    timeChart.data.datasets[0].data.push(avgIterative);
-    timeChart.data.datasets[1].data.push(avgRecursive);
-    
-    timeChart.options.scales.x.title.text = 'Tes CSV';
-    timeChart.options.plugins.title = {
-        display: true,
-        text: `CSV Test ${csvTestCount} (${allCards.length} kartu, avg ${avgLength} digit)`,
-        color: '#f1f5f9',
-        font: {
-            size: 14,
-            weight: 'bold'
-        }
-    };
-    
-    // Auto adjust skala Y
-    const allData = [...timeChart.data.datasets[0].data, ...timeChart.data.datasets[1].data];
-    const maxValue = Math.max(...allData);
-    timeChart.options.scales.y.suggestedMax = maxValue * 1.2;
-    
-    timeChart.update();
-    
-    // Update info
-    document.getElementById('dataPoints').textContent = currentDataPoints.length + 1;
-    document.getElementById('chartStatus').textContent = `CSV Test ${csvTestCount}`;
-    document.getElementById('chartStatus').style.color = '#3b82f6';
-    
-    // Update hasil
-    updateResults(avgIterative, avgRecursive);
-    
-    // Tampilkan hasil CSV
-    displayCSVResult(
-        allCards.length,
-        totalValidIterative,
-        totalValidRecursive,
-        avgIterative,
-        avgRecursive,
-        avgLength
-    );
-    
-    // Simpan data point
-    currentDataPoints.push({
-        type: 'csvSingle',
-        testNumber: csvTestCount,
-        totalCards: allCards.length,
-        avgLength: avgLength,
-        iterativeTime: avgIterative,
-        recursiveTime: avgRecursive
-    });
-    
-    updateChartInfo();
-}
-
 function displayCSVResult(total, iterativeValid, recursiveValid, iterativeTime, recursiveTime, avgLength = 0) {
     const resultDiv = document.getElementById('csvResult');
     
@@ -742,21 +641,14 @@ function displayCSVResult(total, iterativeValid, recursiveValid, iterativeTime, 
     document.getElementById('csvIterativeTime').textContent = iterativeTime.toFixed(2) + ' ms';
     document.getElementById('csvRecursiveTime').textContent = recursiveTime.toFixed(2) + ' ms';
     
-    // Tambahkan info avg length jika ada
+    // Tambahkan info avg length
+    const avgDigitItem = document.getElementById('avgDigitItem');
+    const avgDigitValue = document.getElementById('avgDigitValue');
     if (avgLength > 0) {
-        // Cek apakah elemen avg digit sudah ada
-        let avgElement = document.getElementById('avgDigitElement');
-        if (!avgElement) {
-            const statsDiv = document.querySelector('.csv-stats');
-            avgElement = document.createElement('div');
-            avgElement.id = 'avgDigitElement';
-            avgElement.className = 'stat-item';
-            statsDiv.appendChild(avgElement);
-        }
-        avgElement.innerHTML = `
-            <span class="stat-label">Avg Digit:</span>
-            <span class="stat-value">${avgLength}</span>
-        `;
+        avgDigitItem.style.display = 'flex';
+        avgDigitValue.textContent = avgLength;
+    } else {
+        avgDigitItem.style.display = 'none';
     }
     
     resultDiv.style.display = 'block';
@@ -850,4 +742,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('.clear-btn').addEventListener('click', function() {
         clearChart();
     });
+    
+    // Initialize active button
+    document.querySelector('.iter-btn:nth-child(3)').classList.add('active');
 });
