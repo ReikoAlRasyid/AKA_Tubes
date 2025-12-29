@@ -31,13 +31,101 @@ function luhnRecursive(cardNumber, index = 0, total = 0, isEven = false) {
     return luhnRecursive(cardNumber, index + 1, total + digit, !isEven);
 }
 
-function generateRandomCardNumber(length) {
-    if (length <= 0) return "";
-    let result = '';
-    for (let i = 0; i < length; i++) {
-        result += Math.floor(Math.random() * 10);
+function generateRandomCardNumber(length = null) {
+    // Panjang standar kartu kredit
+    const validLengths = [13, 15, 16, 19];
+    
+    // Jika tidak ditentukan length, pilih random dari panjang valid
+    if (!length) {
+        length = validLengths[Math.floor(Math.random() * validLengths.length)];
     }
-    return result;
+    
+    // Prefix berdasarkan tipe kartu
+    const cardTypes = [
+        { prefix: '4', lengths: [13, 16, 19], name: 'Visa' },
+        { prefix: '5', lengths: [16], name: 'MasterCard' },
+        { prefix: '34', lengths: [15], name: 'American Express' },
+        { prefix: '37', lengths: [15], name: 'American Express' },
+        { prefix: '6', lengths: [16, 19], name: 'Discover' }
+    ];
+    
+    // Filter card types yang support panjang yang diminta
+    const availableTypes = cardTypes.filter(type => type.lengths.includes(length));
+    if (availableTypes.length === 0) {
+        length = 16; // default ke 16 digit
+        return generateRandomCardNumber(length);
+    }
+    
+    const cardType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+    
+    // Generate nomor tanpa check digit
+    let cardNumber = cardType.prefix;
+    const remainingLength = length - cardType.prefix.length - 1; // -1 untuk check digit
+    
+    for (let i = 0; i < remainingLength; i++) {
+        cardNumber += Math.floor(Math.random() * 10);
+    }
+    
+    // Tambahkan check digit dummy dulu
+    cardNumber += '0';
+    
+    // Hitung check digit yang valid dengan Luhn algorithm
+    return generateValidLuhnNumber(cardNumber);
+}
+
+function generateValidLuhnNumber(partialCardNumber) {
+    // Hapus check digit dummy
+    const baseNumber = partialCardNumber.slice(0, -1);
+    let checkDigit = 0;
+    
+    // Coba semua digit 0-9 untuk menemukan yang valid
+    for (let i = 0; i < 10; i++) {
+        const testNumber = baseNumber + i;
+        if (luhnIterative(testNumber)) {
+            return testNumber;
+        }
+    }
+    
+    // Fallback: generate ulang jika gagal
+    return generateRandomCardNumber();
+}
+
+function generateTestCard() {
+    const cardNumber = generateRandomCardNumber();
+    const isValid = luhnIterative(cardNumber);
+    
+    // Tampilkan dengan format yang rapi
+    const formattedCard = formatCardNumber(cardNumber);
+    
+    // Deteksi tipe kartu
+    const cardType = detectCardType(cardNumber);
+    
+    return {
+        number: cardNumber,
+        formatted: formattedCard,
+        type: cardType,
+        valid: isValid,
+        length: cardNumber.length
+    };
+}
+
+function formatCardNumber(cardNumber) {
+    // Format: XXXX XXXX XXXX XXXX (untuk 16 digit)
+    const chunks = [];
+    for (let i = 0; i < cardNumber.length; i += 4) {
+        chunks.push(cardNumber.slice(i, i + 4));
+    }
+    return chunks.join(' ');
+}
+
+function detectCardType(cardNumber) {
+    if (cardNumber.startsWith('4')) return 'Visa';
+    if (cardNumber.startsWith('5')) return 'MasterCard';
+    if (cardNumber.startsWith('34') || cardNumber.startsWith('37')) return 'American Express';
+    if (cardNumber.startsWith('6')) return 'Discover';
+    if (cardNumber.startsWith('35')) return 'JCB';
+    if (cardNumber.startsWith('30') || cardNumber.startsWith('36') || cardNumber.startsWith('38')) return 'Diners Club';
+    return 'Unknown';
 }
 
 function initChart() {
@@ -710,3 +798,4 @@ document.addEventListener('DOMContentLoaded', function() {
         clearChart();
     });
 });
+
