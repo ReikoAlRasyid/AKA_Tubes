@@ -32,53 +32,42 @@ function luhnRecursive(cardNumber, index = 0, total = 0, isEven = false) {
 }
 
 function generateRandomCardNumber(length = null) {
-    // Panjang standar kartu kredit
     const validLengths = [13, 15, 16, 19];
     
-    // Jika tidak ditentukan length, pilih random dari panjang valid
     if (!length) {
         length = validLengths[Math.floor(Math.random() * validLengths.length)];
     }
     
-    // Prefix berdasarkan tipe kartu
     const cardTypes = [
         { prefix: '4', lengths: [13, 16, 19], name: 'Visa' },
         { prefix: '5', lengths: [16], name: 'MasterCard' },
         { prefix: '34', lengths: [15], name: 'American Express' },
         { prefix: '37', lengths: [15], name: 'American Express' },
-        { prefix: '6', lengths: [16, 19], name: 'Discover' }
+        { prefix: '6', lengths: [16], name: 'Discover' }
     ];
     
-    // Filter card types yang support panjang yang diminta
     const availableTypes = cardTypes.filter(type => type.lengths.includes(length));
     if (availableTypes.length === 0) {
-        length = 16; // default ke 16 digit
+        length = 16;
         return generateRandomCardNumber(length);
     }
     
     const cardType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
     
-    // Generate nomor tanpa check digit
     let cardNumber = cardType.prefix;
-    const remainingLength = length - cardType.prefix.length - 1; // -1 untuk check digit
-    
+    const remainingLength = length - cardType.prefix.length - 1;
     for (let i = 0; i < remainingLength; i++) {
         cardNumber += Math.floor(Math.random() * 10);
     }
-    
-    // Tambahkan check digit dummy dulu
     cardNumber += '0';
-    
-    // Hitung check digit yang valid dengan Luhn algorithm
+
     return generateValidLuhnNumber(cardNumber);
 }
 
 function generateValidLuhnNumber(partialCardNumber) {
-    // Hapus check digit dummy
     const baseNumber = partialCardNumber.slice(0, -1);
     let checkDigit = 0;
     
-    // Coba semua digit 0-9 untuk menemukan yang valid
     for (let i = 0; i < 10; i++) {
         const testNumber = baseNumber + i;
         if (luhnIterative(testNumber)) {
@@ -86,18 +75,15 @@ function generateValidLuhnNumber(partialCardNumber) {
         }
     }
     
-    // Fallback: generate ulang jika gagal
     return generateRandomCardNumber();
 }
 
 function generateTestCard() {
     const cardNumber = generateRandomCardNumber();
     const isValid = luhnIterative(cardNumber);
-    
-    // Tampilkan dengan format yang rapi
+
     const formattedCard = formatCardNumber(cardNumber);
-    
-    // Deteksi tipe kartu
+
     const cardType = detectCardType(cardNumber);
     
     return {
@@ -109,8 +95,7 @@ function generateTestCard() {
     };
 }
 
-function formatCardNumber(cardNumber) {
-    // Format: XXXX XXXX XXXX XXXX (untuk 16 digit)
+function formatCardNumber(cardNumber) 
     const chunks = [];
     for (let i = 0; i < cardNumber.length; i += 4) {
         chunks.push(cardNumber.slice(i, i + 4));
@@ -798,4 +783,5 @@ document.addEventListener('DOMContentLoaded', function() {
         clearChart();
     });
 });
+
 
