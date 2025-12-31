@@ -32,14 +32,14 @@ function luhnRecursive(cardNumber, index = 0, total = 0, isEven = false) {
 }
 
 function generateRandomCardNumber(length = null) {
-    const validLengths = [13, 15, 16, 19];
+    const validLengths = [13, 15, 16];
     
     if (!length) {
         length = validLengths[Math.floor(Math.random() * validLengths.length)];
     }
     
     const cardTypes = [
-        { prefix: '4', lengths: [13, 16, 19], name: 'Visa' },
+        { prefix: '4', lengths: [13, 16], name: 'Visa' },
         { prefix: '5', lengths: [16], name: 'MasterCard' },
         { prefix: '34', lengths: [15], name: 'American Express' },
         { prefix: '37', lengths: [15], name: 'American Express' },
@@ -783,5 +783,6 @@ document.addEventListener('DOMContentLoaded', function() {
         clearChart();
     });
 });
+
 
 
