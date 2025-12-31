@@ -446,8 +446,8 @@ function testSingleCard() {
     
     const cleanCardNumber = cardNumber.replace(/\D/g, '');
     
-    if (cleanCardNumber.length < 13 || cleanCardNumber.length > 19) {
-        alert('Nomor kartu harus 13-19 digit');
+    if (cleanCardNumber.length < 13 || cleanCardNumber.length > 16) {
+        alert('Nomor kartu harus 13-16 digit');
         return;
     }
     
@@ -791,6 +791,7 @@ document.addEventListener('DOMContentLoaded', function() {
         clearChart();
     });
 });
+
 
 
 
