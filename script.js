@@ -32,33 +32,28 @@ function luhnRecursive(cardNumber, index = 0, total = 0, isEven = false) {
 }
 
 function generateRandomCardNumber(length = null) {
-    // Panjang standar kartu kredit
-    const validLengths = [13, 15, 16, 19];
-    
-    // Jika tidak ditentukan length, pilih random dari panjang valid
+    const validLengths = [13, 15, 16];
+
     if (!length) {
         length = validLengths[Math.floor(Math.random() * validLengths.length)];
     }
     
-    // Prefix berdasarkan tipe kartu
     const cardTypes = [
-        { prefix: '4', lengths: [13, 16, 19], name: 'Visa' },
+        { prefix: '4', lengths: [13, 16], name: 'Visa' },
         { prefix: '5', lengths: [16], name: 'MasterCard' },
         { prefix: '34', lengths: [15], name: 'American Express' },
         { prefix: '37', lengths: [15], name: 'American Express' },
-        { prefix: '6', lengths: [16, 19], name: 'Discover' }
+        { prefix: '6', lengths: [16], name: 'Discover' }
     ];
     
-    // Filter card types yang support panjang yang diminta
     const availableTypes = cardTypes.filter(type => type.lengths.includes(length));
     if (availableTypes.length === 0) {
-        length = 16; // default ke 16 digit
+        length = 16;
         return generateRandomCardNumber(length);
     }
     
     const cardType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
     
-    // Generate nomor tanpa check digit
     let cardNumber = cardType.prefix;
     const remainingLength = length - cardType.prefix.length - 1; // -1 untuk check digit
     
@@ -66,10 +61,8 @@ function generateRandomCardNumber(length = null) {
         cardNumber += Math.floor(Math.random() * 10);
     }
     
-    // Tambahkan check digit dummy dulu
     cardNumber += '0';
-    
-    // Hitung check digit yang valid dengan Luhn algorithm
+
     return generateValidLuhnNumber(cardNumber);
 }
 
@@ -798,6 +791,7 @@ document.addEventListener('DOMContentLoaded', function() {
         clearChart();
     });
 });
+
 
 
 
